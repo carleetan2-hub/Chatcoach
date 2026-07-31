@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="apple">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ChatCoach · 英语对练</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --radius-lg:18px; --radius-md:12px; }
+  html[data-theme="apple"]{
+    --bg:#F5F5F7; --bg-panel:#FFFFFF; --bg-panel-2:#F0F0F2;
+    --accent:#0071E3; --accent-strong:#0058B0; --accent-ink:#FFFFFF;
+    --correct:#E0433D; --correct-dim:#FCEBEA;
+    --praise:#1B8A5A; --praise-dim:#E7F5EE;
+    --text:#1D1D1F; --text-dim:#6E6E73;
+    --bubble-user:#E8F0FE; --bubble-user-text:#0B3D74;
+    --bubble-ai:#F7F7F8; --bubble-ai-text:#1D1D1F;
+    --border:#E5E5EA;
+  }
+  html[data-theme="mono"]{
+    --bg:#F7F7F8; --bg-panel:#FFFFFF; --bg-panel-2:#ECECEF;
+    --accent:#10A37F; --accent-strong:#0D8768; --accent-ink:#FFFFFF;
+    --correct:#D64545; --correct-dim:#FBEAEA;
+    --praise:#10A37F; --praise-dim:#E4F5EF;
+    --text:#202123; --text-dim:#6E6E80;
+    --bubble-user:#ECECF1; --bubble-user-text:#202123;
+    --bubble-ai:#F9F9FA; --bubble-ai-text:#202123;
+    --border:#E3E3E7;
+  }
+  html[data-theme="sage"]{
+    --bg:#F4FAF7; --bg-panel:#FFFFFF; --bg-panel-2:#ECF6F0;
+    --accent:#128A5E; --accent-strong:#0C6E49; --accent-ink:#FFFFFF;
+    --correct:#D9534F; --correct-dim:#FBEAE9;
+    --praise:#0F9D6E; --praise-dim:#E5F6EC;
+    --text:#122620; --text-dim:#5E7A6D;
+    --bubble-user:#E1F3E9; --bubble-user-text:#123A29;
+    --bubble-ai:#F5FAF8; --bubble-ai-text:#122620;
+    --border:#DCEEE3;
+  }
+  html[data-theme="sky"]{
+    --bg:#F3F8FC; --bg-panel:#FFFFFF; --bg-panel-2:#E9F2FA;
+    --accent:#0284C7; --accent-strong:#036B9E; --accent-ink:#FFFFFF;
+    --correct:#DC5B4E; --correct-dim:#FCECEA;
+    --praise:#0F9D6E; --praise-dim:#E7F8F1;
+    --text:#0F1F2E; --text-dim:#5B7285;
+    --bubble-user:#E3F1FB; --bubble-user-text:#0D3A54;
+    --bubble-ai:#F6FAFD; --bubble-ai-text:#0F1F2E;
+    --border:#DCEBF5;
+  }
+  html[data-theme="lavender"]{
+    --bg:#F8F6FC; --bg-panel:#FFFFFF; --bg-panel-2:#F0ECF8;
+    --accent:#9B8CE0; --accent-strong:#7C6BC7; --accent-ink:#FFFFFF;
+    --correct:#DC6B62; --correct-dim:#FBEBE9;
+    --praise:#4FA383; --praise-dim:#E7F5EE;
+    --text:#2A2440; --text-dim:#867FA0;
+    --bubble-user:#EDE8FA; --bubble-user-text:#3A2E63;
+    --bubble-ai:#FAF8FD; --bubble-ai-text:#2A2440;
+    --border:#E7E1F3;
+  }
+  html[data-theme="noir"]{
+    --bg:#1B1F2E; --bg-panel:#242938; --bg-panel-2:#2E3446;
+    --accent:#E8E9ED; --accent-strong:#FFFFFF; --accent-ink:#1B1F2E;
+    --correct:#F2726B; --correct-dim:rgba(242,114,107,0.16);
+    --praise:#6FD8A8; --praise-dim:rgba(111,216,168,0.16);
+    --text:#F3F4F7; --text-dim:#9AA0B4;
+    --bubble-user:#323A50; --bubble-user-text:#F3F4F7;
+    --bubble-ai:#2A3040; --bubble-ai-text:#F3F4F7;
+    --border:rgba(243,244,247,0.12);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--bg); font-family:'Inter','Noto Sans SC',sans-serif; color:var(--text);
+    min-height:100vh; display:flex; align-items:stretch; justify-content:center;
+    transition:background .25s;
+  }
+  .frame{
+    width:100%; max-width:820px; background:var(--bg-panel);
+    min-height:100vh; overflow:hidden;
+    display:flex; flex-direction:column;
+    border-left:1px solid var(--border); border-right:1px solid var(--border);
+  }
+  .header{
+    padding:14px 20px; display:flex; align-items:center; justify-content:space-between;
+    gap:10px; border-bottom:1px solid var(--border);
+  }
+  .brand-row{display:flex; align-items:center; gap:11px;}
+  .brand-icon{width:36px; height:36px; flex-shrink:0; filter:drop-shadow(0 2px 5px rgba(0,0,0,0.12));}
+  .brand{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:19px; color:var(--accent);}
+  .brand-sub{font-size:11px; color:var(--text-dim); margin-top:2px;}
+  .header-right{display:flex; align-items:center; gap:8px;}
+  .reset-btn{
+    background:none; border:1px solid var(--border); color:var(--text-dim);
+    font-size:12px; padding:6px 12px; border-radius:20px; cursor:pointer; white-space:nowrap;
+    font-family:'Inter',sans-serif;
+  }
+  .reset-btn:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .reset-btn:focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px;}
+  .gear-btn{
+    background:none;border:1px solid var(--border);color:var(--text-dim);
+    width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .gear-btn:hover{border-color:var(--accent);color:var(--accent-strong);}
+
+  /* ---------- SETUP ---------- */
+  .setup{padding:22px 20px 24px; overflow-y:auto;}
+  .section-label{
+    font-family:'Space Grotesk',sans-serif; font-size:12px; text-transform:uppercase;
+    letter-spacing:1.2px; color:var(--text-dim); margin:0 0 10px;
+  }
+  .scenario-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:22px;}
+  .scenario-card{
+    border:1.5px solid var(--border); border-radius:var(--radius-md); background:var(--bg-panel-2);
+    padding:13px 12px; text-align:left; cursor:pointer; color:var(--text); font-family:'Inter',sans-serif;
+    transition:transform .15s, border-color .15s, background .15s;
+  }
+  .scenario-card:hover{transform:translateY(-2px);}
+  .scenario-card:focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px;}
+  .scenario-card.selected{border-color:var(--accent); background:var(--accent); color:var(--accent-ink);}
+  .scenario-card.selected .scenario-en{color:var(--accent-ink); opacity:0.8;}
+  .scenario-icon{font-size:19px; display:block; margin-bottom:6px;}
+  .scenario-title{font-weight:600; font-size:14px; display:block;}
+  .scenario-en{font-size:11px; color:var(--text-dim); display:block; margin-top:2px;}
+  .custom-input{grid-column:1 / -1; display:flex; flex-direction:column; gap:6px;}
+  .custom-input input{
+    background:var(--bg-panel-2); border:1.5px solid var(--border); border-radius:var(--radius-md);
+    padding:10px 12px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px;
+  }
+  .custom-input input:focus{outline:2px solid var(--accent-strong);}
+  .level-row{display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;}
+  .level-pill{
+    border:1px solid var(--border); background:none; color:var(--text-dim); padding:8px 16px;
+    border-radius:20px; font-size:13px; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .level-pill.active{background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:600;}
+  .level-pill:focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px;}
+  .level-desc{font-size:12px; color:var(--text-dim); margin:0 0 8px; min-height:16px;}
+  .level-note{font-size:11.5px; color:var(--text-dim); margin:0 0 22px; line-height:1.5; background:var(--bg-panel-2); padding:8px 12px; border-radius:10px;}
+  .start-btn{
+    width:100%; padding:14px; border:none; border-radius:var(--radius-md); background:var(--accent);
+    color:var(--accent-ink); font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; cursor:pointer;
+  }
+  .start-btn:hover{filter:brightness(1.08);}
+  .start-btn:disabled{opacity:0.4; cursor:not-allowed;}
+  .start-btn:focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px;}
+
+  /* ---------- CHAT ---------- */
+  .chat-screen{display:none; flex-direction:column; flex:1; min-height:0;}
+  .scenario-banner{
+    padding:10px 20px; font-size:12px; color:var(--text-dim); border-bottom:1px solid var(--border);
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+  }
+  .scenario-banner b{color:var(--accent-strong); font-weight:600;}
+  .end-review-btn{
+    background:none; border:1px solid var(--border); color:var(--text-dim); font-size:12px;
+    padding:5px 11px; border-radius:14px; cursor:pointer; white-space:nowrap; font-family:'Inter',sans-serif;
+  }
+  .end-review-btn:hover{border-color:var(--accent); color:var(--accent-strong);}
+  .msgs-wrap{flex:1; overflow-y:auto; padding:18px 18px 6px;}
+  .msg-row{margin-bottom:14px; display:flex; flex-direction:column;}
+  .msg-row.user{align-items:flex-end;}
+  .msg-row.ai{align-items:flex-start;}
+  .bubble{max-width:82%; padding:10px 14px; border-radius:var(--radius-lg); font-size:14px; line-height:1.6;}
+  .msg-row.user .bubble{background:var(--bubble-user); color:var(--bubble-user-text); border-bottom-right-radius:4px;}
+  .msg-row.ai .bubble{background:var(--bubble-ai); color:var(--bubble-ai-text); border-bottom-left-radius:4px; border:1px solid var(--border);}
+  .word-tok{cursor:pointer; border-radius:3px; padding:0 1px;}
+  .word-tok:hover{background:var(--bg-panel-2); text-decoration:underline dotted;}
+  .translate-line{
+    max-width:82%; margin-top:5px; font-size:12.5px; color:var(--text-dim);
+    background:var(--bg-panel-2); padding:7px 11px; border-radius:10px; display:none;
+  }
+  .translate-line.show{display:block;}
+  .row-tools{display:flex; gap:10px; margin-top:4px; align-items:center; flex-wrap:wrap;}
+  .speaker-btn,.retry-btn,.translate-btn{
+    background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:12px; padding:2px 4px;
+    font-family:'Inter',sans-serif;
+  }
+  .speaker-btn:hover,.retry-btn:hover,.translate-btn:hover{color:var(--accent-strong);}
+  .clarity-badge{
+    font-size:11px; color:var(--text-dim); background:var(--bg-panel-2); padding:2px 8px; border-radius:10px;
+  }
+
+  /* correction block: collapsible */
+  .correction-block{
+    max-width:82%; margin-top:6px; border-radius:var(--radius-md);
+    background:var(--correct-dim); border-left:3px solid var(--correct); overflow:hidden;
+  }
+  .correction-toggle{
+    width:100%; text-align:left; background:none; border:none; cursor:pointer;
+    padding:9px 13px; font-family:'Inter',sans-serif; font-weight:600; font-size:13px; color:var(--text);
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+  }
+  .correction-toggle .chev{transition:transform .15s; color:var(--text-dim); font-size:11px;}
+  .correction-toggle.open .chev{transform:rotate(90deg);}
+  .correction-body{display:none; padding:0 13px 12px;}
+  .correction-body.open{display:block;}
+  .encouragement-line{font-size:12.5px; color:var(--text-dim); margin-bottom:8px; font-family:'Noto Sans SC',sans-serif;}
+  .correction-item{margin-bottom:8px;}
+  .correction-item .line{font-family:'Inter',sans-serif; font-weight:700; font-size:13.5px; color:var(--text); margin-bottom:2px;}
+  .correction-item .orig{text-decoration:line-through; opacity:0.55;}
+  .correction-item .arrow{margin:0 5px; color:var(--correct);}
+  .correction-item .note{font-family:'Noto Sans SC',sans-serif; font-size:12.5px; color:var(--text-dim); font-weight:400; margin-top:2px;}
+  .native-version{
+    margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);
+    font-size:12.5px; color:var(--text-dim);
+  }
+  .native-version b{color:var(--text); font-weight:600; font-family:'Noto Sans SC',sans-serif;}
+  .native-version .nv-text{color:var(--text); font-weight:600; margin-top:3px;}
+  .praise-card{
+    max-width:82%; margin-top:6px; padding:8px 13px; border-radius:var(--radius-md);
+    background:var(--praise-dim); border-left:3px solid var(--praise); font-size:13px; color:var(--praise); font-weight:600;
+  }
+  .typing{font-size:13px; color:var(--text-dim); font-style:italic; padding:2px 4px;}
+  .error-row{
+    max-width:82%; padding:10px 13px; border-radius:var(--radius-md); background:var(--correct-dim);
+    border-left:3px solid var(--correct); font-size:13px; color:var(--text);
+  }
+
+  .input-bar{display:flex; gap:8px; padding:12px 16px 16px; border-top:1px solid var(--border); align-items:flex-end;}
+  .input-bar textarea{
+    flex:1; background:var(--bg-panel-2); border:1.5px solid var(--border); border-radius:18px;
+    padding:11px 16px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px;
+    resize:none; max-height:120px; overflow-y:auto; line-height:1.4;
+  }
+  .input-bar textarea:focus{outline:none; border-color:var(--accent);}
+  .input-bar textarea:disabled{opacity:0.55; cursor:not-allowed;}
+  .icon-btn{
+    width:42px; height:42px; border-radius:50%; border:1.5px solid var(--border); background:none; color:var(--text);
+    cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    transition:border-color .15s,color .15s,background .15s;
+  }
+  .icon-btn:hover{border-color:var(--accent); color:var(--accent-strong);}
+  .icon-btn.active{background:var(--correct); border-color:var(--correct); color:#fff;}
+  .icon-btn:focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px;}
+  .send-btn{background:var(--accent); color:var(--accent-ink); border:none; font-weight:700;}
+  .send-btn:hover{filter:brightness(1.08);}
+  .send-btn:disabled{opacity:0.4; cursor:not-allowed;}
+  .voice-row{padding:8px 16px 10px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;}
+  .voice-row-left{flex:1; min-width:120px;}
+  .voice-row-right{display:flex; gap:8px; flex-wrap:wrap;}
+  .voice-select{
+    width:100%; max-width:220px; background:var(--bg-panel-2); border:1px solid var(--border);
+    color:var(--text-dim); font-size:12px; padding:6px 10px; border-radius:16px; font-family:'Inter',sans-serif;
+  }
+  .voice-toggle{
+    display:flex; align-items:center; gap:6px; background:none; border:1px solid var(--border);
+    color:var(--text-dim); font-size:12px; padding:6px 12px; border-radius:16px; cursor:pointer;
+  }
+  .voice-toggle.active{background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:600;}
+  .mic-banner{
+    margin:0 16px 8px; padding:8px 12px; border-radius:10px; font-size:12px;
+    background:var(--correct-dim); color:var(--correct); border-left:3px solid var(--correct);
+  }
+
+  /* word popover */
+  .word-popover{
+    position:fixed; z-index:100; background:var(--bg-panel); border:1px solid var(--border);
+    border-radius:12px; padding:12px 14px; box-shadow:0 12px 30px rgba(0,0,0,0.18); max-width:260px;
+    font-size:13px; display:none;
+  }
+  .word-popover.show{display:block;}
+  .word-popover .wp-word{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; margin-bottom:4px;}
+  .word-popover .wp-en{color:var(--text); margin-bottom:6px; line-height:1.4;}
+  .word-popover .wp-zh-toggle{
+    background:none; border:none; color:var(--accent-strong); cursor:pointer; font-size:12px; padding:0;
+  }
+  .word-popover .wp-zh{display:none; color:var(--text-dim); margin-top:4px; font-family:'Noto Sans SC',sans-serif;}
+  .word-popover .wp-zh.show{display:block;}
+  .word-popover .wp-actions{margin-top:8px; display:flex; gap:8px;}
+  .word-popover .wp-actions button{
+    flex:1; border:1px solid var(--border); background:none; border-radius:8px; padding:5px 8px;
+    font-size:11.5px; cursor:pointer; color:var(--text-dim); font-family:'Inter',sans-serif;
+  }
+  .word-popover .wp-actions button:hover{border-color:var(--accent); color:var(--accent-strong);}
+  .word-popover .wp-loading{color:var(--text-dim); font-size:12px;}
+
+  /* ---------- REVIEW ---------- */
+  .review-screen{display:none; flex-direction:column; flex:1; min-height:0;}
+  .review-body{flex:1; overflow-y:auto; padding:20px;}
+  .review-hero{background:var(--bg-panel-2); border-radius:var(--radius-lg); padding:16px 18px; margin-bottom:18px;}
+  .review-hero h3{margin:0 0 6px; font-family:'Space Grotesk',sans-serif; font-size:15px;}
+  .review-hero p{margin:0; font-size:13px; color:var(--text-dim); line-height:1.55;}
+  .review-stats{display:flex; gap:10px; margin-bottom:18px;}
+  .stat-chip{flex:1; background:var(--bg-panel-2); border-radius:var(--radius-md); padding:10px 12px; text-align:center;}
+  .stat-chip .num{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:20px; color:var(--accent-strong);}
+  .stat-chip .lbl{font-size:11px; color:var(--text-dim); margin-top:2px;}
+  .cat-card{border:1px solid var(--border); border-radius:var(--radius-md); padding:13px 15px; margin-bottom:12px;}
+  .cat-card .cat-title{
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px; color:var(--accent-strong);
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;
+  }
+  .cat-card .cat-title .count{background:var(--correct-dim); color:var(--correct); font-size:11px; padding:2px 9px; border-radius:10px; font-weight:600;}
+  .cat-card .examples{margin:6px 0; font-size:13px;}
+  .cat-card .examples div{margin-bottom:3px;}
+  .cat-card .examples .orig{text-decoration:line-through; opacity:0.5;}
+  .cat-card .examples .arrow{margin:0 4px; color:var(--correct);}
+  .cat-card .cause,.cat-card .advice{font-size:12.5px; color:var(--text-dim); line-height:1.5; margin-top:4px;}
+  .cat-card .cause b,.cat-card .advice b{color:var(--text); font-weight:600;}
+  .level-suggest{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--praise-dim); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:14px;
+    font-size:12.5px; color:var(--text);
+  }
+  .level-suggest b{color:var(--praise);}
+  .next-scenario-btn{
+    width:100%; margin-top:6px; padding:12px; border-radius:var(--radius-md); border:1.5px dashed var(--accent);
+    background:none; color:var(--accent-strong); font-family:'Inter',sans-serif; font-weight:600; font-size:13px; cursor:pointer;
+  }
+  .next-scenario-btn:hover{background:var(--bg-panel-2);}
+  .export-btn{
+    width:100%; margin-top:10px; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border);
+    background:none; color:var(--text-dim); font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; cursor:pointer;
+  }
+  .export-btn:hover{border-color:var(--accent); color:var(--accent-strong);}
+  .review-loading{padding:40px 20px; text-align:center; color:var(--text-dim); font-size:13px;}
+
+  /* ---------- SETTINGS MODAL ---------- */
+  .modal-mask{
+    display:none; position:fixed; inset:0; background:rgba(20,22,43,0.45);
+    align-items:center; justify-content:center; z-index:200; padding:16px;
+  }
+  .modal-mask.show{display:flex;}
+  .settings-modal{
+    background:var(--bg-panel); border:1px solid var(--border); border-radius:18px;
+    width:100%; max-width:440px; max-height:80vh; display:flex; flex-direction:column; color:var(--text);
+  }
+  .settings-header{padding:16px 18px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;}
+  .settings-header h3{margin:0; font-family:'Space Grotesk',sans-serif; font-size:16px;}
+  .settings-close{background:none; border:none; color:var(--text-dim); font-size:18px; cursor:pointer;}
+  .settings-body{padding:16px 18px; overflow-y:auto;}
+  .settings-section{margin-bottom:20px;}
+  .settings-section:last-child{margin-bottom:0;}
+  .settings-section-title{font-family:'Space Grotesk',sans-serif; font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); margin:0 0 10px;}
+  .theme-swatches{display:flex; gap:8px; flex-wrap:wrap;}
+  .theme-swatch{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;}
+  .theme-swatch[data-t="apple"]{background:#0071E3;}
+  .theme-swatch[data-t="mono"]{background:#10A37F;}
+  .theme-swatch[data-t="sage"]{background:#128A5E;}
+  .theme-swatch[data-t="sky"]{background:#0284C7;}
+  .theme-swatch[data-t="lavender"]{background:#9B8CE0;}
+  .theme-swatch[data-t="noir"]{background:#1B1F2E;}
+  .theme-swatch.active{border-color:var(--text);}
+  .vocab-item{
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+    padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;
+  }
+  .vocab-item:last-child{border-bottom:none;}
+  .vocab-item .vw{font-weight:600;}
+  .vocab-item .vm{color:var(--text-dim); font-size:12px;}
+  .vocab-item button{background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:12px;}
+  .settings-empty{font-size:12.5px; color:var(--text-dim); padding:8px 0;}
+  .settings-note{font-size:11.5px; color:var(--text-dim); line-height:1.5; background:var(--bg-panel-2); padding:8px 10px; border-radius:8px; margin-top:8px;}
+  .settings-btn{
+    width:100%; padding:9px; border-radius:10px; border:1px solid var(--border); background:none;
+    color:var(--text-dim); font-family:'Inter',sans-serif; font-size:12.5px; cursor:pointer; margin-top:6px;
+  }
+  .settings-btn:hover{border-color:var(--accent); color:var(--accent-strong);}
+  .settings-btn.danger:hover{border-color:var(--correct); color:var(--correct);}
+  .history-item{border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; font-size:12.5px;}
+  .history-item .h-top{display:flex; justify-content:space-between; font-weight:600; margin-bottom:3px;}
+  .history-item .h-meta{color:var(--text-dim);}
+
+  /* ---------- responsive / mobile ---------- */
+  @media (max-width: 640px){
+    .frame{border-left:none; border-right:none;}
+    .header{padding:12px 14px;}
+    .brand{font-size:17px;}
+    .brand-icon{width:32px; height:32px;}
+    .setup{padding:16px 14px 20px;}
+    .scenario-grid{grid-template-columns:1fr; gap:8px;}
+    .msgs-wrap{padding:14px 12px 4px;}
+    .bubble{max-width:88%; font-size:13.5px;}
+    .correction-block{max-width:88%;}
+    .input-bar{padding:10px 12px 12px;}
+    .voice-row{padding:6px 12px 8px;}
+    .voice-select{max-width:150px;}
+    .voice-toggle{font-size:11px; padding:5px 9px;}
+    .settings-modal{max-height:88vh;}
+    .review-body{padding:14px;}
+  }
+  @media (max-width: 380px){
+    .voice-row-right{width:100%; justify-content:space-between;}
+    .voice-toggle{flex:1; text-align:center;}
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="header">
+    <div class="brand-row">
+      <svg class="brand-icon" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <rect width="40" height="40" rx="11" fill="var(--accent)"/>
+        <path d="M11 15.5C11 12.46 13.46 10 16.5 10H23.5C26.54 10 29 12.46 29 15.5V19.5C29 22.54 26.54 25 23.5 25H18L13.5 28.5V25H16.5C13.46 25 11 22.54 11 19.5V15.5Z" fill="var(--accent-ink)"/>
+        <circle cx="16.5" cy="17.5" r="1.4" fill="var(--accent)"/>
+        <circle cx="20" cy="17.5" r="1.4" fill="var(--accent)"/>
+        <circle cx="23.5" cy="17.5" r="1.4" fill="var(--accent)"/>
+      </svg>
+      <div>
+        <div class="brand">ChatCoach</div>
+        <div class="brand-sub">claude.ai 内置版 · 无需任何配置</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="reset-btn" id="resetBtn" style="display:none;">重新开始</button>
+      <button class="gear-btn" id="gearBtn" title="设置">⚙️</button>
+    </div>
+  </div>
+
+  <!-- SETUP -->
+  <div class="setup" id="setupScreen">
+    <p class="section-label">选择场景</p>
+    <div class="scenario-grid" id="scenarioGrid">
+      <button class="scenario-card" data-cn="餐厅点餐" data-en="Ordering at a restaurant">
+        <span class="scenario-icon">🍽️</span><span class="scenario-title">餐厅点餐</span>
+        <span class="scenario-en">Ordering at a restaurant</span>
+      </button>
+      <button class="scenario-card" data-cn="酒店住宿" data-en="Checking into a hotel">
+        <span class="scenario-icon">🏨</span><span class="scenario-title">酒店住宿</span>
+        <span class="scenario-en">Checking into a hotel</span>
+      </button>
+      <button class="scenario-card" data-cn="旅行问路" data-en="Asking for directions">
+        <span class="scenario-icon">🧭</span><span class="scenario-title">旅行问路</span>
+        <span class="scenario-en">Asking for directions</span>
+      </button>
+      <button class="scenario-card" data-cn="日常闲聊" data-en="Casual small talk">
+        <span class="scenario-icon">💬</span><span class="scenario-title">日常闲聊</span>
+        <span class="scenario-en">Casual small talk</span>
+      </button>
+      <div class="custom-input">
+        <label for="customTopic" style="font-size:12px;color:var(--text-dim);">或自定义话题，AI 会围绕这个场景来对话</label>
+        <input type="text" id="customTopic" placeholder="例如：机场值机、和房东谈租金…">
+      </div>
+    </div>
+
+    <p class="section-label">难度</p>
+    <div class="level-row" id="levelRow">
+      <button class="level-pill" data-level="beginner">初级</button>
+      <button class="level-pill active" data-level="intermediate">中级</button>
+      <button class="level-pill" data-level="advanced">高级</button>
+    </div>
+    <p class="level-desc" id="levelDesc">中级：日常词汇 + 正常语速。</p>
+    <p class="level-note">难度只影响 AI 用词的难易、句子长短和说话语速——不管选哪个难度，你的错误都会被完整指出来，不会因为难度低就被放过，这样你才能真正知道自己的问题在哪。</p>
+
+    <button class="start-btn" id="startBtn" disabled>开始对练</button>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-screen" id="chatScreen">
+    <div class="scenario-banner">
+      <span>场景：<b id="bannerScenario"></b> · <span id="bannerLevel"></span></span>
+      <button class="end-review-btn" id="endReviewBtn">结束并复盘 →</button>
+    </div>
+    <div class="msgs-wrap" id="msgsWrap"></div>
+    <div class="mic-banner" id="micBanner" style="display:none;"></div>
+    <div class="voice-row">
+      <div class="voice-row-left">
+        <select class="voice-select" id="voiceSelect" title="选择朗读音色"></select>
+      </div>
+      <div class="voice-row-right">
+        <button class="voice-toggle" id="autoSpeakToggle">🔊 自动朗读：关</button>
+        <button class="voice-toggle" id="voiceToggle">🎧 语音对话模式：关</button>
+      </div>
+    </div>
+    <div class="input-bar">
+      <button class="icon-btn" id="micBtn" title="语音输入" style="display:none;">🎙️</button>
+      <textarea id="userInput" placeholder="用英语回复看看…" rows="1"></textarea>
+      <button class="icon-btn send-btn" id="sendBtn" title="发送">➤</button>
+    </div>
+  </div>
+
+  <!-- REVIEW -->
+  <div class="review-screen" id="reviewScreen">
+    <div class="scenario-banner">
+      <span>本次复盘 · <b id="reviewScenario"></b></span>
+      <button class="end-review-btn" id="backToChatBtn">← 返回对话</button>
+    </div>
+    <div class="review-body" id="reviewBody">
+      <div class="review-loading" id="reviewLoading">正在整理这次对练的表现…</div>
+    </div>
+  </div>
+</div>
+
+<!-- word lookup popover -->
+<div class="word-popover" id="wordPopover"></div>
+
+<!-- settings modal -->
+<div class="modal-mask" id="settingsMask">
+  <div class="settings-modal">
+    <div class="settings-header">
+      <h3>设置</h3>
+      <button class="settings-close" id="settingsClose">✕</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-section">
+        <p class="settings-section-title">外观</p>
+        <div class="theme-swatches" id="themeSwatches">
+          <button class="theme-swatch active" data-t="apple" title="Apple 风"></button>
+          <button class="theme-swatch" data-t="mono" title="Mono 风"></button>
+          <button class="theme-swatch" data-t="sage" title="Sage"></button>
+          <button class="theme-swatch" data-t="sky" title="Sky"></button>
+          <button class="theme-swatch" data-t="lavender" title="Lavender"></button>
+          <button class="theme-swatch" data-t="noir" title="Noir"></button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <p class="settings-section-title">生词本（本次会话）</p>
+        <div id="vocabListEl"><div class="settings-empty">还没有标记过生词，点单词或点复盘里的"标记不认识"试试。</div></div>
+        <p class="settings-note">这是 claude.ai 内置版，生词本和历史记录只在本次对话里有效，刷新或换设备就会清空。想长期保存，需要用本地版（另外下载的那个文件）。</p>
+      </div>
+      <div class="settings-section">
+        <p class="settings-section-title">历史回顾</p>
+        <div class="settings-empty">本地版才支持跨次数保存历史记录并生成阶段性总结。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const html = document.documentElement;
+
+  // ================= SETTINGS MODAL =================
+  const gearBtn = document.getElementById('gearBtn');
+  const settingsMask = document.getElementById('settingsMask');
+  const settingsClose = document.getElementById('settingsClose');
+  const themeSwatches = document.getElementById('themeSwatches');
+  const vocabListEl = document.getElementById('vocabListEl');
+
+  gearBtn.addEventListener('click', ()=>{ renderVocabList(); settingsMask.classList.add('show'); });
+  settingsClose.addEventListener('click', ()=> settingsMask.classList.remove('show'));
+  settingsMask.addEventListener('click', (e)=>{ if(e.target===settingsMask) settingsMask.classList.remove('show'); });
+
+  themeSwatches.querySelectorAll('.theme-swatch').forEach(sw=>{
+    sw.addEventListener('click', ()=>{
+      html.setAttribute('data-theme', sw.dataset.t);
+      themeSwatches.querySelectorAll('.theme-swatch').forEach(s=>s.classList.remove('active'));
+      sw.classList.add('active');
+    });
+  });
+
+  // ================= VOCAB NOTEBOOK (session-only in this version) =================
+  let vocabList = []; // {word, en, zh, sentence}
+  function addToVocab(entry){
+    if(vocabList.some(v => v.word.toLowerCase() === entry.word.toLowerCase())) return;
+    vocabList.push(entry);
+  }
+  function renderVocabList(){
+    if(!vocabList.length){
+      vocabListEl.innerHTML = '<div class="settings-empty">还没有标记过生词，点单词或点复盘里的"标记不认识"试试。</div>';
+      return;
+    }
+    vocabListEl.innerHTML = '';
+    vocabList.forEach((v, idx)=>{
+      const row = document.createElement('div');
+      row.className = 'vocab-item';
+      row.innerHTML = `<span><span class="vw">${escapeHtml(v.word)}</span><br><span class="vm">${escapeHtml(v.zh || v.en || '')}</span></span>`;
+      const del = document.createElement('button');
+      del.textContent = '移除';
+      del.addEventListener('click', ()=>{ vocabList.splice(idx,1); renderVocabList(); });
+      row.appendChild(del);
+      vocabListEl.appendChild(row);
+    });
+  }
+
+  const scenarioGrid = document.getElementById('scenarioGrid');
+  const customTopic = document.getElementById('customTopic');
+  const levelRow = document.getElementById('levelRow');
+  const levelDesc = document.getElementById('levelDesc');
+  const startBtn = document.getElementById('startBtn');
+  const setupScreen = document.getElementById('setupScreen');
+  const chatScreen = document.getElementById('chatScreen');
+  const reviewScreen = document.getElementById('reviewScreen');
+  const resetBtn = document.getElementById('resetBtn');
+  const msgsWrap = document.getElementById('msgsWrap');
+  const userInput = document.getElementById('userInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const micBtn = document.getElementById('micBtn');
+  const voiceToggle = document.getElementById('voiceToggle');
+  const autoSpeakToggle = document.getElementById('autoSpeakToggle');
+  const voiceSelect = document.getElementById('voiceSelect');
+  const micBanner = document.getElementById('micBanner');
+  const bannerScenario = document.getElementById('bannerScenario');
+  const bannerLevel = document.getElementById('bannerLevel');
+  const endReviewBtn = document.getElementById('endReviewBtn');
+  const backToChatBtn = document.getElementById('backToChatBtn');
+  const reviewScenarioEl = document.getElementById('reviewScenario');
+  const reviewBody = document.getElementById('reviewBody');
+  const wordPopover = document.getElementById('wordPopover');
+
+  let selectedScenario = null;
+  let selectedLevel = 'intermediate';
+  const levelLabel = {beginner:'初级', intermediate:'中级', advanced:'高级'};
+  const levelDescText = {
+    beginner:'初级：只用最常见的词汇，句子更短，语速更慢。',
+    intermediate:'中级：日常词汇 + 正常语速。',
+    advanced:'高级：地道表达、更丰富的词汇和句式，语速更快。'
+  };
+  const levelRate = {beginner:0.85, intermediate:0.95, advanced:1.05};
+  let history = [];
+  let sessionCorrections = [];
+  let turnCount = 0;
+  let voiceModeOn = false;
+  let listening = false;
+  let lastFailed = null;
+  let lastInputWasVoice = false;
+
+  scenarioGrid.querySelectorAll('.scenario-card').forEach(card=>{
+    card.addEventListener('click', ()=> selectScenario({cn:card.dataset.cn, en:card.dataset.en}, card));
+  });
+  customTopic.addEventListener('input', ()=>{
+    if(customTopic.value.trim()){
+      scenarioGrid.querySelectorAll('.scenario-card').forEach(c=>c.classList.remove('selected'));
+      selectedScenario = {cn:customTopic.value.trim(), en:customTopic.value.trim()};
+      startBtn.disabled = false;
+    } else if(!scenarioGrid.querySelector('.scenario-card.selected')){
+      startBtn.disabled = true;
+    }
+  });
+  function selectScenario(sc, cardEl){
+    scenarioGrid.querySelectorAll('.scenario-card').forEach(c=>c.classList.remove('selected'));
+    if(cardEl) cardEl.classList.add('selected');
+    customTopic.value='';
+    selectedScenario = sc;
+    startBtn.disabled = false;
+  }
+  function selectLevel(lv){
+    levelRow.querySelectorAll('.level-pill').forEach(x=>x.classList.toggle('active', x.dataset.level===lv));
+    selectedLevel = lv;
+    levelDesc.textContent = levelDescText[selectedLevel];
+  }
+  levelRow.querySelectorAll('.level-pill').forEach(p=>{
+    p.addEventListener('click', ()=> selectLevel(p.dataset.level));
+  });
+
+  startBtn.addEventListener('click', startChat);
+  resetBtn.addEventListener('click', ()=>goToSetup());
+  function goToSetup(suggestedLevel){
+    history = []; sessionCorrections = []; turnCount = 0; lastFailed=null; voiceModeOn=false; updateVoiceToggle();
+    msgsWrap.innerHTML = '';
+    setupScreen.style.display='block';
+    chatScreen.style.display='none';
+    reviewScreen.style.display='none';
+    resetBtn.style.display='none';
+    if(suggestedLevel) selectLevel(suggestedLevel);
+  }
+
+  function startChat(){
+    setupScreen.style.display='none';
+    chatScreen.style.display='flex';
+    reviewScreen.style.display='none';
+    resetBtn.style.display='inline-block';
+    bannerScenario.textContent = selectedScenario.cn;
+    bannerLevel.textContent = levelLabel[selectedLevel];
+    msgsWrap.innerHTML = '';
+    history = []; sessionCorrections = []; turnCount = 0;
+    fetchTurn(null, true);
+  }
+
+  // ---- textarea auto-resize + enter-to-send (shift+enter = newline) ----
+  function autoResize(){
+    userInput.style.height = 'auto';
+    userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
+  }
+  userInput.addEventListener('input', ()=>{ autoResize(); lastInputWasVoice = false; });
+  userInput.addEventListener('keydown', e=>{
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+  });
+  sendBtn.addEventListener('click', ()=>sendMessage());
+
+  function sendMessage(clarity){
+    const text = userInput.value.trim();
+    if(!text || sendBtn.disabled || userInput.disabled) return;
+    let c = clarity;
+    if(c === undefined && lastInputWasVoice && userInput.dataset.clarity){
+      c = parseFloat(userInput.dataset.clarity);
+    }
+    lastInputWasVoice = false;
+    userInput.dataset.clarity = '';
+    addUserBubble(text, c);
+    userInput.value='';
+    autoResize();
+    fetchTurn(text, false);
+  }
+
+  function addUserBubble(text, clarity){
+    const row = document.createElement('div');
+    row.className = 'msg-row user';
+    row.innerHTML = `<div class="bubble"></div>`;
+    row.querySelector('.bubble').textContent = text;
+    if(typeof clarity === 'number'){
+      const tools = document.createElement('div');
+      tools.className='row-tools';
+      const badge = document.createElement('span');
+      badge.className='clarity-badge';
+      badge.title='基于浏览器语音识别的粗略估计，不是专业发音评分';
+      badge.textContent = `🎯 识别清晰度 ${Math.round(clarity*100)}%`;
+      tools.appendChild(badge);
+      row.appendChild(tools);
+    }
+    msgsWrap.appendChild(row);
+    scrollDown();
+  }
+
+  // ---- word tokenizing for click-to-define ----
+  function renderWordTokens(container, text){
+    const parts = text.split(/(\s+)/);
+    parts.forEach(part=>{
+      if(/^\s+$/.test(part) || part===''){
+        container.appendChild(document.createTextNode(part));
+        return;
+      }
+      const cleanWord = part.replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, '');
+      if(!cleanWord){ container.appendChild(document.createTextNode(part)); return; }
+      const span = document.createElement('span');
+      span.className = 'word-tok';
+      span.textContent = part;
+      span.addEventListener('click', (e)=> openWordPopover(e, cleanWord, text));
+      container.appendChild(span);
+    });
+  }
+
+  function addAiBubble(text){
+    const row = document.createElement('div');
+    row.className = 'msg-row ai';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    renderWordTokens(bubble, text);
+    row.appendChild(bubble);
+
+    const translateLine = document.createElement('div');
+    translateLine.className = 'translate-line';
+    row.appendChild(translateLine);
+
+    const tools = document.createElement('div');
+    tools.className='row-tools';
+    const speakBtn = document.createElement('button');
+    speakBtn.className = 'speaker-btn';
+    speakBtn.textContent = '🔊 朗读';
+    speakBtn.addEventListener('click', ()=> speakQueue([text], ()=>{}));
+    tools.appendChild(speakBtn);
+
+    const translateBtn = document.createElement('button');
+    translateBtn.className = 'translate-btn';
+    translateBtn.textContent = '🌐 翻译';
+    let translated = null;
+    translateBtn.addEventListener('click', async ()=>{
+      if(translateLine.classList.contains('show')){
+        translateLine.classList.remove('show');
+        return;
+      }
+      if(translated){
+        translateLine.textContent = translated;
+        translateLine.classList.add('show');
+        return;
+      }
+      translateLine.textContent = '翻译中…';
+      translateLine.classList.add('show');
+      try{
+        const data = await callClaudeAPI({
+          model: "claude-sonnet-4-6", max_tokens: 200,
+          messages: [{role:'user', content: `Translate this English sentence into natural, concise Chinese. Respond with ONLY the Chinese translation, nothing else:\n"${text}"`}]
+        }, 2);
+        const out = (data.content||[]).map(b=>b.text||'').join('').trim();
+        translated = out || '（翻译失败）';
+        translateLine.textContent = translated;
+      }catch(e){
+        translateLine.textContent = '翻译失败，再点一次试试';
+        translated = null;
+      }
+    });
+    tools.appendChild(translateBtn);
+
+    row.appendChild(tools);
+    msgsWrap.appendChild(row);
+    scrollDown();
+  }
+
+  // ---- word popover: click a word to see its meaning ----
+  const wordDefCache = new Map();
+  let currentPopoverToken = 0;
+  document.addEventListener('click', (e)=>{
+    if(!wordPopover.contains(e.target) && !e.target.classList.contains('word-tok')){
+      wordPopover.classList.remove('show');
+    }
+  });
+  async function openWordPopover(e, word, sentence){
+    e.stopPropagation();
+    const myToken = ++currentPopoverToken;
+    const rect = e.target.getBoundingClientRect();
+    wordPopover.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
+    wordPopover.style.top = (rect.bottom + 6) + 'px';
+    wordPopover.classList.add('show');
+    wordPopover.innerHTML = `<div class="wp-word">${escapeHtml(word)}</div><div class="wp-loading">查询中…</div>`;
+
+    const cacheKey = word.toLowerCase() + '|' + sentence;
+    let def = wordDefCache.get(cacheKey);
+    if(!def){
+      try{
+        const data = await callClaudeAPI({
+          model: "claude-sonnet-4-6", max_tokens: 200,
+          messages: [{role:'user', content: `Define the English word or phrase "${word}" as it's used in this sentence: "${sentence}". Respond ONLY with JSON, no markdown fences: {"en":"one simple English definition, max 15 words","zh":"concise Chinese meaning, max 12 characters"}`}]
+        }, 2);
+        const raw = (data.content||[]).map(b=>b.text||'').join('');
+        def = JSON.parse(extractJson(raw));
+        wordDefCache.set(cacheKey, def);
+      }catch(err){
+        def = {en:'查询失败，再点一次试试', zh:''};
+        // deliberately not cached, so the next click retries instead of repeating the same failure forever
+      }
+    }
+    if(myToken !== currentPopoverToken) return; // a newer click superseded this one
+    wordPopover.innerHTML = `
+      <div class="wp-word">${escapeHtml(word)}</div>
+      <div class="wp-en">${escapeHtml(def.en||'')}</div>
+      <button class="wp-zh-toggle">显示中文释义 ›</button>
+      <div class="wp-zh">${escapeHtml(def.zh||'')}</div>
+      <div class="wp-actions">
+        <button class="wp-mark">🔖 加入生词本</button>
+      </div>
+    `;
+    wordPopover.querySelector('.wp-zh-toggle').addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      const zh = wordPopover.querySelector('.wp-zh');
+      zh.classList.toggle('show');
+    });
+    wordPopover.querySelector('.wp-mark').addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      addToVocab({word, en:def.en, zh:def.zh, sentence});
+      ev.target.textContent = '✓ 已加入';
+    });
+  }
+
+  function addCorrectionCard(corrections, praise, encouragement, nativeVersion){
+    if(corrections && corrections.length){
+      corrections.forEach(c => sessionCorrections.push(c));
+      const block = document.createElement('div');
+      block.className = 'correction-block';
+      block.style.marginLeft = 'auto';
+
+      const toggle = document.createElement('button');
+      toggle.className = 'correction-toggle';
+      toggle.innerHTML = `<span>✏️ 有 ${corrections.length} 处可以更地道</span><span class="chev">›</span>`;
+
+      const body = document.createElement('div');
+      body.className = 'correction-body';
+
+      if(encouragement){
+        const enc = document.createElement('div');
+        enc.className = 'encouragement-line';
+        enc.textContent = '🌟 ' + encouragement;
+        body.appendChild(enc);
+      }
+      corrections.forEach(c=>{
+        const item = document.createElement('div');
+        item.className = 'correction-item';
+        item.innerHTML = `<div class="line"><span class="orig">${escapeHtml(c.original)}</span><span class="arrow">→</span><span>${escapeHtml(c.suggestion)}</span></div>${c.note?`<div class="note">${escapeHtml(c.note)}</div>`:''}`;
+        body.appendChild(item);
+      });
+      if(nativeVersion){
+        const nv = document.createElement('div');
+        nv.className = 'native-version';
+        nv.innerHTML = `<b>🗣️ 母语者可能会这样说：</b><div class="nv-text">${escapeHtml(nativeVersion)}</div>`;
+        body.appendChild(nv);
+      }
+
+      toggle.addEventListener('click', ()=>{
+        const isOpen = body.classList.toggle('open');
+        toggle.classList.toggle('open', isOpen);
+      });
+
+      block.appendChild(toggle);
+      block.appendChild(body);
+      msgsWrap.appendChild(block);
+    } else if(praise){
+      const p = document.createElement('div');
+      p.className='praise-card';
+      p.style.marginLeft='auto';
+      p.textContent = '✓ ' + praise;
+      msgsWrap.appendChild(p);
+    }
+    scrollDown();
+  }
+
+  function addTyping(){
+    const row = document.createElement('div');
+    row.className='msg-row ai'; row.id='typingRow';
+    row.innerHTML = `<div class="typing">对方正在输入…</div>`;
+    msgsWrap.appendChild(row);
+    scrollDown();
+  }
+  function removeTyping(){ const t = document.getElementById('typingRow'); if(t) t.remove(); }
+
+  function addErrorRow(){
+    const row = document.createElement('div');
+    row.className='msg-row ai'; row.id = 'errorRow';
+    const err = document.createElement('div');
+    err.className='error-row';
+    err.textContent = 'AI 好像有点忙，没能回复成功，重试一次就好（这条消息还没发出去，可以先点重试再继续）。';
+    row.appendChild(err);
+    const tools = document.createElement('div');
+    tools.className='row-tools';
+    const retry = document.createElement('button');
+    retry.className='retry-btn'; retry.textContent = '🔁 重试';
+    retry.addEventListener('click', ()=>{ row.remove(); if(lastFailed) fetchTurn(lastFailed.userText, lastFailed.isOpening); });
+    tools.appendChild(retry);
+    row.appendChild(tools);
+    msgsWrap.appendChild(row);
+    userInput.placeholder = '请先点上面的"重试"…';
+    scrollDown();
+  }
+
+  function scrollDown(){ msgsWrap.scrollTop = msgsWrap.scrollHeight; }
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function extractJson(text){
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if(start===-1 || end===-1 || end<start) throw new Error('no json found in response');
+    return text.slice(start, end+1);
+  }
+
+  function speakQueue(texts, onAllDone){
+    if(!('speechSynthesis' in window) || !texts.length){ onAllDone && onAllDone(); return; }
+    window.speechSynthesis.cancel();
+    let i = 0;
+    function next(){
+      if(i >= texts.length){ onAllDone && onAllDone(); return; }
+      const u = new SpeechSynthesisUtterance(texts[i]);
+      u.lang = 'en-US';
+      u.rate = levelRate[selectedLevel] || 0.95;
+      if(selectedVoice) u.voice = selectedVoice;
+      u.onend = ()=>{ i++; next(); };
+      u.onerror = ()=>{ i++; next(); };
+      window.speechSynthesis.speak(u);
+    }
+    next();
+  }
+
+  let selectedVoice = null;
+  function populateVoices(){
+    if(!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+    const list = voices.length ? voices : window.speechSynthesis.getVoices();
+    if(!list.length) return;
+    voiceSelect.innerHTML = '';
+    list.forEach((v, idx)=>{
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = `${v.name} (${v.lang})`;
+      voiceSelect.appendChild(opt);
+    });
+    selectedVoice = list[0];
+    voiceSelect.onchange = ()=>{ selectedVoice = list[voiceSelect.value]; };
+  }
+  if('speechSynthesis' in window){
+    populateVoices();
+    window.speechSynthesis.onvoiceschanged = populateVoices;
+  } else {
+    voiceSelect.style.display = 'none';
+  }
+
+  let micBannerTimer = null;
+  function showMicBanner(msg){
+    micBanner.textContent = msg;
+    micBanner.style.display = 'block';
+    clearTimeout(micBannerTimer);
+    micBannerTimer = setTimeout(()=>{ micBanner.style.display='none'; }, 6000);
+  }
+
+  let autoSpeakOn = false;
+  function updateAutoSpeakToggle(){
+    autoSpeakToggle.textContent = autoSpeakOn ? '🔊 自动朗读：开' : '🔊 自动朗读：关';
+    autoSpeakToggle.classList.toggle('active', autoSpeakOn);
+  }
+  autoSpeakToggle.addEventListener('click', ()=>{
+    autoSpeakOn = !autoSpeakOn;
+    updateAutoSpeakToggle();
+    if(!autoSpeakOn) window.speechSynthesis.cancel();
+  });
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null;
+  if(SR){
+    micBtn.style.display='flex';
+    rec = new SR(); rec.lang='en-US'; rec.interimResults=false;
+    micBtn.addEventListener('click', ()=>{ if(listening){ rec.stop(); return; } startListening(); });
+    rec.onresult = (e)=>{
+      const result = e.results[0][0];
+      userInput.value = result.transcript;
+      autoResize();
+      lastInputWasVoice = true;
+      const clarity = (typeof result.confidence === 'number' && result.confidence > 0) ? result.confidence : null;
+      if(voiceModeOn){ sendMessage(clarity); }
+      else { userInput.dataset.clarity = clarity!==null ? clarity : ''; }
+    };
+    rec.onend = ()=>{ listening=false; micBtn.classList.remove('active'); };
+    rec.onerror = (e)=>{
+      listening=false; micBtn.classList.remove('active');
+      let msg = '麦克风识别出了点问题，再试一次？';
+      if(e && e.error === 'not-allowed') msg = '麦克风权限被拒绝了 —— 如果是在 Claude 对话预览里，这可能是预览环境本身没有开放麦克风权限，可以试试发布后的独立页面，或者用本地版打开。';
+      else if(e && e.error === 'no-speech') msg = '没有听到声音，凑近一点再试一次？';
+      else if(e && e.error === 'network') msg = '语音识别网络异常，请重试。';
+      showMicBanner(msg);
+    };
+  } else {
+    voiceToggle.disabled = true;
+    voiceToggle.title = '当前浏览器不支持语音识别，语音对话模式不可用（可尝试 Chrome）';
+    micBtn.style.display = 'none';
+  }
+  function startListening(){
+    if(!rec) return;
+    try{ rec.start(); listening=true; micBtn.classList.add('active'); }
+    catch(e){ showMicBanner('麦克风启动失败，请稍后再试。'); }
+  }
+  function updateVoiceToggle(){
+    voiceToggle.textContent = voiceModeOn ? '🎧 语音对话模式：开' : '🎧 语音对话模式：关';
+    voiceToggle.classList.toggle('active', voiceModeOn);
+  }
+  voiceToggle.addEventListener('click', ()=>{
+    if(!SR) return;
+    voiceModeOn = !voiceModeOn;
+    updateVoiceToggle();
+    if(voiceModeOn){ startListening(); } else { if(rec) rec.stop(); window.speechSynthesis.cancel(); }
+  });
+
+  // ---- API helper with silent auto-retry for transient overload/network errors ----
+  function sleep(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+  async function callClaudeAPI(body, attempts){
+    attempts = attempts || 3;
+    let lastErr;
+    for(let i=0; i<attempts; i++){
+      try{
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const raw = await response.text();
+        let data;
+        try{ data = JSON.parse(raw); }
+        catch(e){ throw new Error('响应不是有效的 JSON（可能是网络中断或服务暂时不可用）'); }
+        if(data.error){
+          const isOverloaded = data.error.type === 'overloaded_error' || /overload/i.test(data.error.message || '');
+          if(isOverloaded && i < attempts - 1){ await sleep(700 * (i + 1)); continue; }
+          throw new Error(data.error.message || '接口返回了错误');
+        }
+        return data;
+      }catch(err){
+        lastErr = err;
+        if(i < attempts - 1){ await sleep(700 * (i + 1)); continue; }
+      }
+    }
+    throw lastErr;
+  }
+
+  // ---- API: conversation turn ----
+  async function fetchTurn(userText, isOpening){
+    sendBtn.disabled = true;
+    addTyping();
+
+    const levelSystemDesc = {
+      beginner: 'The learner is a beginner. Use only very common, everyday vocabulary and short sentences (under 10 words), and speak slowly. Be extra encouraging in tone.',
+      intermediate: 'The learner is intermediate. Use natural everyday vocabulary and normal sentence length and pace.',
+      advanced: 'The learner is advanced. Use natural, idiomatic English with richer vocabulary, varied sentence structure, and normal native pace.'
+    }[selectedLevel];
+
+    const systemPrompt = `You are role-playing as a conversation partner helping someone practice spoken English.
+Scenario: "${selectedScenario.en}". ${levelSystemDesc}
+Rules:
+- Stay in character for the scenario. Keep your in-character reply short: 1-3 natural sentences, like real spoken dialogue.
+- ${isOpening ? 'This is the opening line: start the scene naturally. There is no learner message yet, so "corrections" must be an empty array, "encouragement" and "native_version" must be "", and "praise" must be "".' : "After giving your in-character reply, separately evaluate the learner's last message for EVERY grammar, word choice, or naturalness issue, regardless of the learner's level - always point out mistakes fully and honestly, the level only changes your own vocabulary/pace, never how strictly you check the learner. List up to 3 concise corrections if there are real issues. If there are corrections, also write: (1) a short warm one-sentence 'encouragement' in Chinese to say before the corrections (never skip this, always find something genuine and specific to be positive about, e.g. effort, a correct part of the sentence, or good communication despite errors), and (2) a 'native_version' - one natural full sentence in English showing how a native speaker would most naturally express what the learner was trying to say (not just a list of fixes, a real fluent sentence). If the message was already good with no real issues, leave corrections/encouragement/native_version empty and instead write a short one-sentence praise in natural spoken English in the 'praise' field."}
+- Never break character in the "reply" field itself - corrections go only in the "corrections" field.
+- The "note" field explaining each correction, and the "encouragement" field, must be written in Chinese.
+- The "praise" and "native_version" fields, if used, must be written in natural spoken English.
+Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly this shape:
+{"reply": "string", "corrections": [{"original": "string", "suggestion": "string", "note": "short string in Chinese explaining why"}], "encouragement": "string or empty", "native_version": "string or empty", "praise": "string or empty"}`;
+
+    const apiMessages = history.slice();
+    apiMessages.push({role:'user', content: isOpening ? '(begin the scene)' : userText});
+
+    try{
+      const data = await callClaudeAPI({ model: "claude-sonnet-4-6", max_tokens: 1200, system: systemPrompt, messages: apiMessages });
+
+      const textOut = (data.content||[]).map(b=>b.text||'').join('');
+      const clean = textOut.replace(/```json|```/g,'').trim();
+      let parsed;
+      try{ parsed = JSON.parse(extractJson(clean)); }
+      catch(e){ parsed = {reply: clean || "Sorry, could you say that again?", corrections: [], encouragement:"", native_version:"", praise:""}; }
+
+      removeTyping();
+      if(!isOpening) addCorrectionCard(parsed.corrections, parsed.praise, parsed.encouragement, parsed.native_version);
+      addAiBubble(parsed.reply);
+      if(!isOpening) turnCount++;
+
+      history.push({role:'user', content: isOpening ? '(begin the scene)' : userText});
+      history.push({role:'assistant', content: parsed.reply});
+      lastFailed = null;
+      userInput.disabled = false;
+      userInput.placeholder = '用英语回复看看…';
+
+      const toSpeak = [parsed.reply];
+      if(parsed.corrections && parsed.corrections.length){
+        parsed.corrections.forEach(c=>{
+          toSpeak.push(`Quick tip: instead of saying "${c.original}", try saying "${c.suggestion}".`);
+        });
+      }
+      if(voiceModeOn || autoSpeakOn){
+        speakQueue(toSpeak, ()=>{ if(voiceModeOn) startListening(); });
+      }
+
+    }catch(err){
+      removeTyping();
+      lastFailed = {userText, isOpening};
+      userInput.disabled = true;
+      addErrorRow();
+      console.error('ChatCoach API error:', err);
+    } finally {
+      sendBtn.disabled = false;
+      userInput.focus();
+    }
+  }
+
+  // ---- review / 复盘 ----
+  endReviewBtn.addEventListener('click', openReview);
+  backToChatBtn.addEventListener('click', ()=>{
+    reviewScreen.style.display='none';
+    chatScreen.style.display='flex';
+  });
+
+  let lastReviewData = null;
+
+  async function openReview(){
+    chatScreen.style.display='none';
+    reviewScreen.style.display='flex';
+    reviewScenarioEl.textContent = selectedScenario.cn;
+    reviewBody.innerHTML = '<div class="review-loading" id="reviewLoading">正在整理这次对练的表现…</div>';
+
+    if(turnCount === 0){
+      reviewBody.innerHTML = '<div class="review-loading">这次还没说几句话，多聊几轮再来复盘效果更好～</div>';
+      return;
+    }
+
+    const transcript = history.map(h => `${h.role === 'user' ? 'Learner' : 'AI'}: ${h.content}`).join('\n');
+    const correctionsJson = JSON.stringify(sessionCorrections);
+
+    const reviewSystemPrompt = `You are an English speaking coach reviewing a practice session transcript.
+Scenario: "${selectedScenario.en}". Learner's current level setting: ${selectedLevel}.
+Here is the full transcript:
+${transcript}
+
+Here are all the corrections that were flagged during the session (JSON): ${correctionsJson}
+
+Task: analyze the learner's performance and produce a structured review.
+- Group the corrections into 2-5 meaningful categories (e.g. verb tense, prepositions, word choice, word order, articles, etc - pick categories that actually fit what happened, in Chinese names).
+- For each category: category name (Chinese), issue count, up to 3 example pairs (original -> suggestion), a short root-cause explanation in Chinese, and a short actionable piece of advice in Chinese.
+- Identify 1-2 genuine strengths from the transcript (in Chinese).
+- Write one short overall encouraging paragraph in Chinese (2-3 sentences).
+- Suggest one specific next scenario or focus area to practice next (in Chinese, one sentence).
+- Based on how well the learner handled this level, suggest whether their next session level should be "beginner", "intermediate", or "advanced", plus a one-sentence Chinese reason.
+If there were no corrections at all, categories should be an empty array and strengths/overall should praise the clean performance, and the level suggestion should likely move up.
+Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this shape:
+{"categories": [{"name":"string","count":number,"examples":[{"original":"string","suggestion":"string"}],"cause":"string","advice":"string"}], "strengths": "string", "overall": "string", "next_focus": "string", "suggested_level": "beginner|intermediate|advanced", "level_reason": "string"}`;
+
+    try{
+      const data = await callClaudeAPI({
+        model: "claude-sonnet-4-6", max_tokens: 3000,
+        messages: [{role:'user', content: reviewSystemPrompt}]
+      });
+      const textOut = (data.content||[]).map(b=>b.text||'').join('');
+      const clean = textOut.replace(/```json|```/g,'').trim();
+      const parsed = JSON.parse(extractJson(clean));
+      lastReviewData = parsed;
+      renderReview(parsed);
+    }catch(err){
+      reviewBody.innerHTML = `<div class="review-loading">复盘生成失败了，要不再试一次？<br><br><button class="end-review-btn" id="retryReviewBtn">🔁 重试</button></div>`;
+      document.getElementById('retryReviewBtn').addEventListener('click', openReview);
+      console.error('ChatCoach review error:', err);
+    }
+  }
+
+  function renderReview(data){
+    let out = '';
+    out += `<div class="review-stats">
+      <div class="stat-chip"><div class="num">${turnCount}</div><div class="lbl">对话轮数</div></div>
+      <div class="stat-chip"><div class="num">${sessionCorrections.length}</div><div class="lbl">被纠正次数</div></div>
+      <div class="stat-chip"><div class="num">${data.categories ? data.categories.length : 0}</div><div class="lbl">错误类型</div></div>
+    </div>`;
+    out += `<div class="review-hero"><h3>👍 做得好的地方</h3><p>${escapeHtml(data.strengths||'')}</p></div>`;
+
+    (data.categories||[]).forEach(cat=>{
+      let examplesHtml = (cat.examples||[]).map(ex=>
+        `<div><span class="orig">${escapeHtml(ex.original)}</span><span class="arrow">→</span><span>${escapeHtml(ex.suggestion)}</span></div>`
+      ).join('');
+      out += `<div class="cat-card">
+        <div class="cat-title"><span>${escapeHtml(cat.name)}</span><span class="count">${cat.count} 处</span></div>
+        <div class="examples">${examplesHtml}</div>
+        <div class="cause"><b>原因：</b>${escapeHtml(cat.cause||'')}</div>
+        <div class="advice"><b>建议：</b>${escapeHtml(cat.advice||'')}</div>
+      </div>`;
+    });
+
+    out += `<div class="review-hero"><h3>📌 总结</h3><p>${escapeHtml(data.overall||'')}</p></div>`;
+
+    if(data.suggested_level){
+      out += `<div class="level-suggest"><span>建议下次难度：<b>${escapeHtml(levelLabel[data.suggested_level]||data.suggested_level)}</b> — ${escapeHtml(data.level_reason||'')}</span></div>`;
+    }
+    out += `<button class="next-scenario-btn" id="nextFocusBtn">下一步：${escapeHtml(data.next_focus||'继续练习')}</button>`;
+    out += `<button class="export-btn" id="exportReviewBtn">📥 导出本次复盘（Markdown）</button>`;
+
+    reviewBody.innerHTML = out;
+    const nextBtn = document.getElementById('nextFocusBtn');
+    if(nextBtn){
+      nextBtn.addEventListener('click', ()=>{
+        reviewScreen.style.display='none';
+        goToSetup(data.suggested_level);
+      });
+    }
+    const exportBtn = document.getElementById('exportReviewBtn');
+    if(exportBtn) exportBtn.addEventListener('click', ()=> exportReview(data));
+  }
+
+  function exportReview(data){
+    let md = `# ChatCoach 复盘 · ${selectedScenario.cn}\n\n`;
+    md += `日期：${new Date().toLocaleString()}\n对话轮数：${turnCount}　被纠正次数：${sessionCorrections.length}\n\n`;
+    md += `## 做得好的地方\n${data.strengths||''}\n\n`;
+    (data.categories||[]).forEach(cat=>{
+      md += `## ${cat.name}（${cat.count} 处）\n`;
+      (cat.examples||[]).forEach(ex=>{ md += `- ${ex.original} → ${ex.suggestion}\n`; });
+      md += `原因：${cat.cause||''}\n建议：${cat.advice||''}\n\n`;
+    });
+    md += `## 总结\n${data.overall||''}\n\n`;
+    if(data.suggested_level) md += `建议下次难度：${levelLabel[data.suggested_level]||data.suggested_level} — ${data.level_reason||''}\n\n`;
+    md += `下一步：${data.next_focus||''}\n`;
+
+    const blob = new Blob([md], {type:'text/markdown'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chatcoach-review-${Date.now()}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+})();
+</script>
+</body>
+</html>
