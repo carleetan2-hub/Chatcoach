@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ChatCoach · 英语对练</title>
+<title>ChatCoach · 英语对练（本地版）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -385,6 +385,16 @@
     .voice-row-right{width:100%; justify-content:space-between;}
     .voice-toggle{flex:1; text-align:center;}
   }
+  .settings-input{
+    width:100%; background:var(--bg-panel-2); border:1.5px solid var(--border); border-radius:10px;
+    padding:9px 11px; color:var(--text); font-size:13px; margin-bottom:10px; font-family:'Inter',sans-serif;
+  }
+  .settings-input:focus{outline:2px solid var(--accent-strong);}
+  .settings-label{font-size:12px; color:var(--text-dim); display:block; margin-bottom:4px;}
+  .key-warning{
+    font-size:12px;color:var(--correct);background:var(--correct-dim);
+    padding:8px 12px;border-radius:10px;margin-bottom:10px;display:none;
+  }
 </style>
 </head>
 <body>
@@ -400,7 +410,7 @@
       </svg>
       <div>
         <div class="brand">ChatCoach</div>
-        <div class="brand-sub">claude.ai 内置版 · 无需任何配置</div>
+        <div class="brand-sub">本地版 · 需要自行配置 API</div>
       </div>
     </div>
     <div class="header-right">
@@ -495,6 +505,18 @@
     </div>
     <div class="settings-body">
       <div class="settings-section">
+        <p class="settings-section-title">API 设置</p>
+        <div class="key-warning" id="keyWarning">还没有配置 API Key，无法开始对话。</div>
+        <label class="settings-label" for="baseUrlInput">API Base URL</label>
+        <input type="text" id="baseUrlInput" class="settings-input" placeholder="https://api.anthropic.com">
+        <label class="settings-label" for="modelInput">模型名称</label>
+        <input type="text" id="modelInput" class="settings-input" placeholder="claude-sonnet-5">
+        <label class="settings-label" for="apiKeyInput">API Key</label>
+        <input type="password" id="apiKeyInput" class="settings-input" placeholder="sk-ant-...">
+        <button class="settings-btn" id="saveApiBtn">保存 API 设置</button>
+        <p class="settings-note">信息只保存在你这台电脑的浏览器本地，不会上传。官方 Anthropic 接口国内直连通常需要科学上网；国内可直连的选项可以填智谱等 Claude 兼容中转地址，如 https://open.bigmodel.cn/api/anthropic。</p>
+      </div>
+      <div class="settings-section">
         <p class="settings-section-title">外观</p>
         <div class="theme-swatches" id="themeSwatches">
           <button class="theme-swatch active" data-t="apple" title="Apple 风"></button>
@@ -506,13 +528,18 @@
         </div>
       </div>
       <div class="settings-section">
-        <p class="settings-section-title">生词本（本次会话）</p>
+        <p class="settings-section-title">生词本（长期保存）</p>
         <div id="vocabListEl"><div class="settings-empty">还没有标记过生词，点单词或点复盘里的"标记不认识"试试。</div></div>
-        <p class="settings-note">这是 claude.ai 内置版，生词本和历史记录只在本次对话里有效，刷新或换设备就会清空。想长期保存，需要用本地版（另外下载的那个文件）。</p>
       </div>
       <div class="settings-section">
         <p class="settings-section-title">历史回顾</p>
-        <div class="settings-empty">本地版才支持跨次数保存历史记录并生成阶段性总结。</div>
+        <div id="historyListEl"><div class="settings-empty">完成一次"结束并复盘"后，会自动记录在这里。</div></div>
+        <button class="settings-btn" id="trendSummaryBtn">📈 生成阶段性总结</button>
+        <div id="trendResultEl"></div>
+      </div>
+      <div class="settings-section">
+        <p class="settings-section-title">数据管理</p>
+        <button class="settings-btn danger" id="clearDataBtn">清除本地全部数据（生词本 / 历史 / API 设置）</button>
       </div>
     </div>
   </div>
@@ -522,30 +549,98 @@
 (function(){
   const html = document.documentElement;
 
+  // ================= LOCAL PERSISTENCE (this is a standalone local file, not a
+  // claude.ai artifact, so localStorage on the user's own machine is appropriate) =================
+  const LS_CONFIG = 'chatcoach_api_config';
+  const LS_VOCAB = 'chatcoach_vocab';
+  const LS_HISTORY = 'chatcoach_history';
+  const LS_THEME = 'chatcoach_theme';
+
+  function loadJSON(key, fallback){
+    try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch(e){ return fallback; }
+  }
+  function saveJSON(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+
+  let apiConfig = loadJSON(LS_CONFIG, { baseUrl:'https://api.anthropic.com', model:'claude-sonnet-5', apiKey:'' });
+
+  const savedTheme = localStorage.getItem(LS_THEME);
+  if(savedTheme) html.setAttribute('data-theme', savedTheme);
+
+  function apiHeaders(){
+    return {
+      "Content-Type": "application/json",
+      "x-api-key": apiConfig.apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    };
+  }
+  function apiUrl(){ return apiConfig.baseUrl + "/v1/messages"; }
+
   // ================= SETTINGS MODAL =================
   const gearBtn = document.getElementById('gearBtn');
   const settingsMask = document.getElementById('settingsMask');
   const settingsClose = document.getElementById('settingsClose');
   const themeSwatches = document.getElementById('themeSwatches');
   const vocabListEl = document.getElementById('vocabListEl');
+  const historyListEl = document.getElementById('historyListEl');
+  const trendSummaryBtn = document.getElementById('trendSummaryBtn');
+  const trendResultEl = document.getElementById('trendResultEl');
+  const clearDataBtn = document.getElementById('clearDataBtn');
+  const baseUrlInput = document.getElementById('baseUrlInput');
+  const modelInput = document.getElementById('modelInput');
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const saveApiBtn = document.getElementById('saveApiBtn');
+  const keyWarning = document.getElementById('keyWarning');
 
-  gearBtn.addEventListener('click', ()=>{ renderVocabList(); settingsMask.classList.add('show'); });
+  function openSettings(){
+    baseUrlInput.value = apiConfig.baseUrl || 'https://api.anthropic.com';
+    modelInput.value = apiConfig.model || 'claude-sonnet-5';
+    apiKeyInput.value = apiConfig.apiKey || '';
+    keyWarning.style.display = apiConfig.apiKey ? 'none' : 'block';
+    renderVocabList();
+    renderHistoryList();
+    settingsMask.classList.add('show');
+  }
+  gearBtn.addEventListener('click', openSettings);
   settingsClose.addEventListener('click', ()=> settingsMask.classList.remove('show'));
   settingsMask.addEventListener('click', (e)=>{ if(e.target===settingsMask) settingsMask.classList.remove('show'); });
 
+  saveApiBtn.addEventListener('click', ()=>{
+    apiConfig = {
+      baseUrl: (baseUrlInput.value.trim() || 'https://api.anthropic.com').replace(/\/$/,''),
+      model: modelInput.value.trim() || 'claude-sonnet-5',
+      apiKey: apiKeyInput.value.trim()
+    };
+    saveJSON(LS_CONFIG, apiConfig);
+    keyWarning.style.display = apiConfig.apiKey ? 'none' : 'block';
+  });
+  if(!apiConfig.apiKey){ setTimeout(openSettings, 300); }
+
   themeSwatches.querySelectorAll('.theme-swatch').forEach(sw=>{
+    if(sw.dataset.t === (savedTheme || 'apple')) sw.classList.add('active'); else sw.classList.remove('active');
     sw.addEventListener('click', ()=>{
       html.setAttribute('data-theme', sw.dataset.t);
+      localStorage.setItem(LS_THEME, sw.dataset.t);
       themeSwatches.querySelectorAll('.theme-swatch').forEach(s=>s.classList.remove('active'));
       sw.classList.add('active');
     });
   });
 
-  // ================= VOCAB NOTEBOOK (session-only in this version) =================
-  let vocabList = []; // {word, en, zh, sentence}
+  clearDataBtn.addEventListener('click', ()=>{
+    if(!confirm('确定要清除生词本、历史记录和 API 设置吗？此操作无法撤销。')) return;
+    localStorage.removeItem(LS_CONFIG);
+    localStorage.removeItem(LS_VOCAB);
+    localStorage.removeItem(LS_HISTORY);
+    localStorage.removeItem(LS_THEME);
+    location.reload();
+  });
+
+  // ================= VOCAB NOTEBOOK (persisted) =================
+  let vocabList = loadJSON(LS_VOCAB, []);
   function addToVocab(entry){
     if(vocabList.some(v => v.word.toLowerCase() === entry.word.toLowerCase())) return;
     vocabList.push(entry);
+    saveJSON(LS_VOCAB, vocabList);
   }
   function renderVocabList(){
     if(!vocabList.length){
@@ -559,11 +654,51 @@
       row.innerHTML = `<span><span class="vw">${escapeHtml(v.word)}</span><br><span class="vm">${escapeHtml(v.zh || v.en || '')}</span></span>`;
       const del = document.createElement('button');
       del.textContent = '移除';
-      del.addEventListener('click', ()=>{ vocabList.splice(idx,1); renderVocabList(); });
+      del.addEventListener('click', ()=>{ vocabList.splice(idx,1); saveJSON(LS_VOCAB, vocabList); renderVocabList(); });
       row.appendChild(del);
       vocabListEl.appendChild(row);
     });
   }
+
+  // ================= HISTORY LOG (persisted) =================
+  let historyList = loadJSON(LS_HISTORY, []); // {date, scenarioCn, level, turnCount, correctionsCount, overall}
+  function addHistoryEntry(entry){
+    historyList.push(entry);
+    if(historyList.length > 50) historyList = historyList.slice(-50);
+    saveJSON(LS_HISTORY, historyList);
+  }
+  function renderHistoryList(){
+    if(!historyList.length){
+      historyListEl.innerHTML = '<div class="settings-empty">完成一次"结束并复盘"后，会自动记录在这里。</div>';
+      return;
+    }
+    historyListEl.innerHTML = '';
+    historyList.slice().reverse().forEach(h=>{
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.innerHTML = `<div class="h-top"><span>${escapeHtml(h.scenarioCn)} · ${escapeHtml(levelLabel[h.level]||h.level)}</span><span class="h-meta">${escapeHtml(h.date)}</span></div><div class="h-meta">${h.turnCount} 轮对话 · ${h.correctionsCount} 处纠正</div>`;
+      historyListEl.appendChild(item);
+    });
+  }
+  trendSummaryBtn.addEventListener('click', async ()=>{
+    if(!historyList.length){
+      trendResultEl.innerHTML = '<div class="settings-empty">还没有历史记录，先练几次再来看趋势吧。</div>';
+      return;
+    }
+    if(!apiConfig.apiKey){ openSettings(); return; }
+    trendResultEl.innerHTML = '<div class="settings-empty">正在分析这段时间的表现…</div>';
+    try{
+      const summaryData = historyList.map(h => `${h.date} | ${h.scenarioCn} | 难度:${h.level} | ${h.turnCount}轮 | ${h.correctionsCount}处纠正 | 总评:${h.overall||''}`).join('\n');
+      const data = await callClaudeAPI({
+        model: apiConfig.model, max_tokens: 800,
+        messages: [{role:'user', content: `以下是一位英语学习者过去多次练习的记录：\n${summaryData}\n\n请你作为语言学习教练，用中文写一段简短的阶段性总结（150字以内），指出这段时间反复出现的问题、进步的地方，以及接下来该重点练什么。直接给出总结文字，不要markdown标题。`}]
+      });
+      const text = (data.content||[]).map(b=>b.text||'').join('').trim();
+      trendResultEl.innerHTML = `<div class="settings-note">${escapeHtml(text)}</div>`;
+    }catch(e){
+      trendResultEl.innerHTML = '<div class="settings-empty">生成失败了，再试一次？</div>';
+    }
+  });
 
   const scenarioGrid = document.getElementById('scenarioGrid');
   const customTopic = document.getElementById('customTopic');
@@ -760,7 +895,7 @@
       translateLine.classList.add('show');
       try{
         const data = await callClaudeAPI({
-          model: "claude-sonnet-4-6", max_tokens: 200,
+          model: apiConfig.model, max_tokens: 200,
           messages: [{role:'user', content: `Translate this English sentence into natural, concise Chinese. Respond with ONLY the Chinese translation, nothing else:\n"${text}"`}]
         }, 2);
         const out = (data.content||[]).map(b=>b.text||'').join('').trim();
@@ -800,7 +935,7 @@
     if(!def){
       try{
         const data = await callClaudeAPI({
-          model: "claude-sonnet-4-6", max_tokens: 200,
+          model: apiConfig.model, max_tokens: 200,
           messages: [{role:'user', content: `Define the English word or phrase "${word}" as it's used in this sentence: "${sentence}". Respond ONLY with JSON, no markdown fences: {"en":"one simple English definition, max 15 words","zh":"concise Chinese meaning, max 12 characters"}`}]
         }, 2);
         const raw = (data.content||[]).map(b=>b.text||'').join('');
@@ -808,7 +943,6 @@
         wordDefCache.set(cacheKey, def);
       }catch(err){
         def = {en:'查询失败，再点一次试试', zh:''};
-        // deliberately not cached, so the next click retries instead of repeating the same failure forever
       }
     }
     if(myToken !== currentPopoverToken) return; // a newer click superseded this one
@@ -1032,9 +1166,9 @@
     let lastErr;
     for(let i=0; i<attempts; i++){
       try{
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
+        const response = await fetch(apiUrl(), {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: apiHeaders(),
           body: JSON.stringify(body)
         });
         const raw = await response.text();
@@ -1080,8 +1214,12 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly t
     const apiMessages = history.slice();
     apiMessages.push({role:'user', content: isOpening ? '(begin the scene)' : userText});
 
+    if(!apiConfig.apiKey){
+      removeTyping(); lastFailed = {userText, isOpening}; userInput.disabled = true; addErrorRow(); openSettings();
+      sendBtn.disabled = false; return;
+    }
     try{
-      const data = await callClaudeAPI({ model: "claude-sonnet-4-6", max_tokens: 1200, system: systemPrompt, messages: apiMessages });
+      const data = await callClaudeAPI({ model: apiConfig.model, max_tokens: 1200, system: systemPrompt, messages: apiMessages });
 
       const textOut = (data.content||[]).map(b=>b.text||'').join('');
       const clean = textOut.replace(/```json|```/g,'').trim();
@@ -1165,13 +1303,21 @@ Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this s
 
     try{
       const data = await callClaudeAPI({
-        model: "claude-sonnet-4-6", max_tokens: 3000,
+        model: apiConfig.model, max_tokens: 3000,
         messages: [{role:'user', content: reviewSystemPrompt}]
       });
       const textOut = (data.content||[]).map(b=>b.text||'').join('');
       const clean = textOut.replace(/```json|```/g,'').trim();
       const parsed = JSON.parse(extractJson(clean));
       lastReviewData = parsed;
+      addHistoryEntry({
+        date: new Date().toLocaleString(),
+        scenarioCn: selectedScenario.cn,
+        level: selectedLevel,
+        turnCount: turnCount,
+        correctionsCount: sessionCorrections.length,
+        overall: parsed.overall || ''
+      });
       renderReview(parsed);
     }catch(err){
       reviewBody.innerHTML = `<div class="review-loading">复盘生成失败了，要不再试一次？<br><br><button class="end-review-btn" id="retryReviewBtn">🔁 重试</button></div>`;
