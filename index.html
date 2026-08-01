@@ -124,6 +124,25 @@
   .scenario-icon{font-size:19px; display:block; margin-bottom:6px;}
   .scenario-title{font-weight:600; font-size:14px; display:block;}
   .scenario-en{font-size:11px; color:var(--text-dim); display:block; margin-top:2px;}
+  .path-grid{display:flex; flex-direction:column; gap:10px; margin-bottom:22px;}
+  .path-card{
+    border:1.5px solid var(--border); border-radius:var(--radius-md); background:var(--bg-panel-2);
+    padding:13px 14px; text-align:left; cursor:pointer; color:var(--text); font-family:'Inter',sans-serif;
+    transition:transform .15s, border-color .15s;
+  }
+  .path-card:hover{transform:translateY(-2px);}
+  .path-card.active-path{border-color:var(--accent); background:var(--correct-dim);}
+  .path-title{font-weight:700; font-size:14px; font-family:'Space Grotesk',sans-serif;}
+  .path-subtitle{font-size:11.5px; color:var(--text-dim); margin-top:2px;}
+  .path-progress-dots{display:flex; gap:5px; margin-top:8px;}
+  .path-dot{width:8px; height:8px; border-radius:50%; background:var(--border);}
+  .path-dot.done{background:var(--praise);}
+  .path-dot.current{background:var(--accent);}
+  .path-quit-btn{
+    background:none; border:none; color:var(--text-dim); font-size:11px; cursor:pointer;
+    text-decoration:underline; padding:0; margin-top:4px;
+  }
+  .path-banner-progress{font-size:11px; color:var(--accent-strong); font-weight:600;}
   .custom-input{grid-column:1 / -1; display:flex; flex-direction:column; gap:6px;}
   .custom-input input{
     background:var(--bg-panel-2); border:1.5px solid var(--border); border-radius:var(--radius-md);
@@ -234,6 +253,19 @@
   }
   .icon-btn:hover{border-color:var(--accent); color:var(--accent-strong);}
   .icon-btn.active{background:var(--correct); border-color:var(--correct); color:#fff;}
+  .icon-btn.listening-pulse{position:relative;}
+  .icon-btn.listening-pulse::after{
+    content:''; position:absolute; inset:-4px; border-radius:50%; border:2px solid var(--correct);
+    animation:mic-pulse 1.4s ease-out infinite;
+  }
+  @keyframes mic-pulse{
+    0%{ transform:scale(0.85); opacity:0.9; }
+    70%{ transform:scale(1.5); opacity:0; }
+    100%{ transform:scale(1.5); opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .icon-btn.listening-pulse::after{animation:none;}
+  }
   .icon-btn:focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px;}
   .send-btn{background:var(--accent); color:var(--accent-ink); border:none; font-weight:700;}
   .send-btn:hover{filter:brightness(1.08);}
@@ -258,12 +290,16 @@
   /* word popover */
   .word-popover{
     position:fixed; z-index:100; background:var(--bg-panel); border:1px solid var(--border);
-    border-radius:12px; padding:12px 14px; box-shadow:0 12px 30px rgba(0,0,0,0.18); max-width:260px;
-    font-size:13px; display:none;
+    border-radius:12px; padding:12px 14px; box-shadow:0 12px 30px rgba(0,0,0,0.18); max-width:290px;
+    font-size:13px; display:none; max-height:70vh; overflow-y:auto;
   }
   .word-popover.show{display:block;}
   .word-popover .wp-word{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; margin-bottom:4px;}
+  .word-popover .wp-ipa{font-weight:400; font-size:12px; color:var(--text-dim); font-family:'Inter',sans-serif;}
   .word-popover .wp-en{color:var(--text); margin-bottom:6px; line-height:1.4;}
+  .word-popover .wp-colloc{font-size:11.5px; color:var(--text-dim); margin-bottom:5px; line-height:1.5;}
+  .word-popover .wp-colloc b{color:var(--text); font-weight:600; font-family:'Noto Sans SC',sans-serif;}
+  .word-popover .wp-example{font-size:12px; color:var(--text-dim); font-style:italic; margin-bottom:6px; line-height:1.4;}
   .word-popover .wp-zh-toggle{
     background:none; border:none; color:var(--accent-strong); cursor:pointer; font-size:12px; padding:0;
   }
@@ -343,6 +379,15 @@
   .theme-swatch[data-t="lavender"]{background:#9B8CE0;}
   .theme-swatch[data-t="noir"]{background:#1B1F2E;}
   .theme-swatch.active{border-color:var(--text);}
+  .vocab-cat-header{
+    font-family:'Space Grotesk',sans-serif; font-size:11px; text-transform:uppercase; letter-spacing:0.6px;
+    color:var(--accent-strong); margin:12px 0 4px; font-weight:600;
+  }
+  .vocab-cat-header:first-child{margin-top:0;}
+  .vocab-expand-btn{
+    background:none; border:none; color:var(--accent-strong); cursor:pointer; font-size:12px;
+    padding:4px 0; font-family:'Inter',sans-serif;
+  }
   .vocab-item{
     display:flex; justify-content:space-between; align-items:center; gap:8px;
     padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;
@@ -439,11 +484,34 @@
         <span class="scenario-icon">💬</span><span class="scenario-title">日常闲聊</span>
         <span class="scenario-en">Casual small talk</span>
       </button>
+      <button class="scenario-card" data-cn="求职面试" data-en="A job interview">
+        <span class="scenario-icon">💼</span><span class="scenario-title">求职面试</span>
+        <span class="scenario-en">A job interview</span>
+      </button>
+      <button class="scenario-card" data-cn="工作会议" data-en="A work meeting or status update">
+        <span class="scenario-icon">📊</span><span class="scenario-title">工作会议</span>
+        <span class="scenario-en">A work meeting or status update</span>
+      </button>
+      <button class="scenario-card" data-cn="观点讨论" data-en="Discussing and debating an opinion">
+        <span class="scenario-icon">🗣️</span><span class="scenario-title">观点讨论</span>
+        <span class="scenario-en">Discussing and debating an opinion</span>
+      </button>
+      <button class="scenario-card" data-cn="投诉协商" data-en="Making a complaint and negotiating a solution">
+        <span class="scenario-icon">📝</span><span class="scenario-title">投诉协商</span>
+        <span class="scenario-en">Making a complaint and negotiating a solution</span>
+      </button>
+      <button class="scenario-card" data-cn="新同事破冰" data-en="Small talk with a new colleague">
+        <span class="scenario-icon">🤝</span><span class="scenario-title">新同事破冰</span>
+        <span class="scenario-en">Small talk with a new colleague</span>
+      </button>
       <div class="custom-input">
         <label for="customTopic" style="font-size:12px;color:var(--text-dim);">或自定义话题，AI 会围绕这个场景来对话</label>
         <input type="text" id="customTopic" placeholder="例如：机场值机、和房东谈租金…">
       </div>
     </div>
+
+    <p class="section-label">🗺️ 或者：闯关学习路径（可选，不选就是上面的自由练习）</p>
+    <div class="path-grid" id="pathGrid"></div>
 
     <p class="section-label">难度</p>
     <div class="level-row" id="levelRow">
@@ -471,6 +539,7 @@
       </div>
       <div class="voice-row-right">
         <button class="voice-toggle" id="autoSpeakToggle">🔊 自动朗读：关</button>
+        <button class="voice-toggle" id="autoSendToggle">📤 语音自动发送：关</button>
         <button class="voice-toggle" id="voiceToggle">🎧 语音对话模式：关</button>
       </div>
     </div>
@@ -532,6 +601,10 @@
         <div id="vocabListEl"><div class="settings-empty">还没有标记过生词，点单词或点复盘里的"标记不认识"试试。</div></div>
       </div>
       <div class="settings-section">
+        <p class="settings-section-title">常用表达库（长期保存）</p>
+        <div id="chunkListEl"></div>
+      </div>
+      <div class="settings-section">
         <p class="settings-section-title">历史回顾</p>
         <div id="historyListEl"><div class="settings-empty">完成一次"结束并复盘"后，会自动记录在这里。</div></div>
         <button class="settings-btn" id="trendSummaryBtn">📈 生成阶段性总结</button>
@@ -553,6 +626,8 @@
   // claude.ai artifact, so localStorage on the user's own machine is appropriate) =================
   const LS_CONFIG = 'chatcoach_api_config';
   const LS_VOCAB = 'chatcoach_vocab';
+  const LS_CHUNKS = 'chatcoach_chunks';
+  const LS_PATH_PROGRESS = 'chatcoach_path_progress';
   const LS_HISTORY = 'chatcoach_history';
   const LS_THEME = 'chatcoach_theme';
 
@@ -570,6 +645,7 @@
     return {
       "Content-Type": "application/json",
       "x-api-key": apiConfig.apiKey,
+      "Authorization": "Bearer " + apiConfig.apiKey,
       "anthropic-version": "2023-06-01",
       "anthropic-dangerous-direct-browser-access": "true"
     };
@@ -582,6 +658,7 @@
   const settingsClose = document.getElementById('settingsClose');
   const themeSwatches = document.getElementById('themeSwatches');
   const vocabListEl = document.getElementById('vocabListEl');
+  const chunkListEl = document.getElementById('chunkListEl');
   const historyListEl = document.getElementById('historyListEl');
   const trendSummaryBtn = document.getElementById('trendSummaryBtn');
   const trendResultEl = document.getElementById('trendResultEl');
@@ -598,6 +675,7 @@
     apiKeyInput.value = apiConfig.apiKey || '';
     keyWarning.style.display = apiConfig.apiKey ? 'none' : 'block';
     renderVocabList();
+    renderChunkList();
     renderHistoryList();
     settingsMask.classList.add('show');
   }
@@ -627,9 +705,11 @@
   });
 
   clearDataBtn.addEventListener('click', ()=>{
-    if(!confirm('确定要清除生词本、历史记录和 API 设置吗？此操作无法撤销。')) return;
+    if(!confirm('确定要清除生词本、表达库、学习路径进度、历史记录和 API 设置吗？此操作无法撤销。')) return;
     localStorage.removeItem(LS_CONFIG);
     localStorage.removeItem(LS_VOCAB);
+    localStorage.removeItem(LS_CHUNKS);
+    localStorage.removeItem(LS_PATH_PROGRESS);
     localStorage.removeItem(LS_HISTORY);
     localStorage.removeItem(LS_THEME);
     location.reload();
@@ -642,22 +722,89 @@
     vocabList.push(entry);
     saveJSON(LS_VOCAB, vocabList);
   }
+  const VOCAB_COLLAPSE_AT = 5;
+  const expandedCategories = new Set();
   function renderVocabList(){
     if(!vocabList.length){
       vocabListEl.innerHTML = '<div class="settings-empty">还没有标记过生词，点单词或点复盘里的"标记不认识"试试。</div>';
       return;
     }
-    vocabListEl.innerHTML = '';
+    const groups = {};
     vocabList.forEach((v, idx)=>{
+      const cat = v.category || '其他';
+      if(!groups[cat]) groups[cat] = [];
+      groups[cat].push({...v, _idx: idx});
+    });
+    vocabListEl.innerHTML = '';
+    Object.keys(groups).sort((a,b)=> a==='其他' ? 1 : (b==='其他' ? -1 : 0)).forEach(cat=>{
+      const items = groups[cat];
+      const catHeader = document.createElement('div');
+      catHeader.className = 'vocab-cat-header';
+      catHeader.textContent = `${cat}（${items.length}）`;
+      vocabListEl.appendChild(catHeader);
+
+      const isExpanded = expandedCategories.has(cat) || items.length <= VOCAB_COLLAPSE_AT;
+      const visibleItems = isExpanded ? items : items.slice(0, VOCAB_COLLAPSE_AT);
+
+      visibleItems.forEach(v=>{
+        const row = document.createElement('div');
+        row.className = 'vocab-item';
+        row.innerHTML = `<span><span class="vw">${escapeHtml(v.word)}</span>${v.ipa?` <span class="wp-ipa">${escapeHtml(v.ipa)}</span>`:''}<br><span class="vm">${escapeHtml(v.zh || v.en || '')}</span></span>`;
+        const del = document.createElement('button');
+        del.textContent = '移除';
+        del.addEventListener('click', ()=>{ vocabList.splice(v._idx,1); saveJSON(LS_VOCAB, vocabList); renderVocabList(); });
+        row.appendChild(del);
+        vocabListEl.appendChild(row);
+      });
+
+      if(items.length > VOCAB_COLLAPSE_AT){
+        const toggle = document.createElement('button');
+        toggle.className = 'vocab-expand-btn';
+        toggle.textContent = isExpanded ? '收起 ‹' : `展开全部 ${items.length} 个 ›`;
+        toggle.addEventListener('click', ()=>{
+          if(isExpanded) expandedCategories.delete(cat); else expandedCategories.add(cat);
+          renderVocabList();
+        });
+        vocabListEl.appendChild(toggle);
+      }
+    });
+  }
+
+  // ================= EXPRESSION / CHUNK LIBRARY (persisted, auto-captured from native_version) =================
+  let chunkList = loadJSON(LS_CHUNKS, []); // {phrase, scenario, date}
+  const CHUNK_COLLAPSE_AT = 6;
+  let chunkExpanded = false;
+  function addToChunks(phrase, scenarioCn){
+    if(!phrase) return;
+    if(chunkList.some(c => c.phrase.toLowerCase() === phrase.toLowerCase())) return;
+    chunkList.push({phrase, scenario: scenarioCn, date: new Date().toLocaleDateString()});
+    saveJSON(LS_CHUNKS, chunkList);
+  }
+  function renderChunkList(){
+    if(!chunkList.length){
+      chunkListEl.innerHTML = '<div class="settings-empty">对话时说错的句子，会自动把"母语者会怎么说"存在这里，攒多了就是你自己的地道表达库。</div>';
+      return;
+    }
+    const list = chunkExpanded ? chunkList.slice().reverse() : chunkList.slice(-CHUNK_COLLAPSE_AT).reverse();
+    chunkListEl.innerHTML = '';
+    list.forEach((c)=>{
+      const idx = chunkList.indexOf(c);
       const row = document.createElement('div');
       row.className = 'vocab-item';
-      row.innerHTML = `<span><span class="vw">${escapeHtml(v.word)}</span><br><span class="vm">${escapeHtml(v.zh || v.en || '')}</span></span>`;
+      row.innerHTML = `<span><span class="vw" style="font-size:13px;">${escapeHtml(c.phrase)}</span><br><span class="vm">${escapeHtml(c.scenario)} · ${escapeHtml(c.date)}</span></span>`;
       const del = document.createElement('button');
       del.textContent = '移除';
-      del.addEventListener('click', ()=>{ vocabList.splice(idx,1); saveJSON(LS_VOCAB, vocabList); renderVocabList(); });
+      del.addEventListener('click', ()=>{ chunkList.splice(idx,1); saveJSON(LS_CHUNKS, chunkList); renderChunkList(); });
       row.appendChild(del);
-      vocabListEl.appendChild(row);
+      chunkListEl.appendChild(row);
     });
+    if(chunkList.length > CHUNK_COLLAPSE_AT){
+      const toggle = document.createElement('button');
+      toggle.className = 'vocab-expand-btn';
+      toggle.textContent = chunkExpanded ? '收起 ‹' : `展开全部 ${chunkList.length} 条 ›`;
+      toggle.addEventListener('click', ()=>{ chunkExpanded = !chunkExpanded; renderChunkList(); });
+      chunkListEl.appendChild(toggle);
+    }
   }
 
   // ================= HISTORY LOG (persisted) =================
@@ -701,6 +848,7 @@
   });
 
   const scenarioGrid = document.getElementById('scenarioGrid');
+  const pathGrid = document.getElementById('pathGrid');
   const customTopic = document.getElementById('customTopic');
   const levelRow = document.getElementById('levelRow');
   const levelDesc = document.getElementById('levelDesc');
@@ -715,6 +863,7 @@
   const micBtn = document.getElementById('micBtn');
   const voiceToggle = document.getElementById('voiceToggle');
   const autoSpeakToggle = document.getElementById('autoSpeakToggle');
+  const autoSendToggle = document.getElementById('autoSendToggle');
   const voiceSelect = document.getElementById('voiceSelect');
   const micBanner = document.getElementById('micBanner');
   const bannerScenario = document.getElementById('bannerScenario');
@@ -742,6 +891,95 @@
   let lastFailed = null;
   let lastInputWasVoice = false;
 
+  // ================= LEARNING PATHS (progress persisted) =================
+  const LEARNING_PATHS = [
+    {
+      id: 'travel-intro',
+      title: '旅行英语入门',
+      subtitle: '5 关 · 从问路点餐到搞定突发状况',
+      stages: [
+        {scenario:{cn:'旅行问路', en:'Asking for directions'}, level:'beginner', targetChunks:['Could you tell me how to get to...', 'Is it within walking distance?']},
+        {scenario:{cn:'餐厅点餐', en:'Ordering at a restaurant'}, level:'beginner', targetChunks:["I'd like to...", 'Could I get the bill, please?']},
+        {scenario:{cn:'酒店住宿', en:'Checking into a hotel'}, level:'intermediate', targetChunks:['I have a reservation under...', 'Could you upgrade my room?']},
+        {scenario:{cn:'日常闲聊', en:'Casual small talk'}, level:'intermediate', targetChunks:['What brings you here?', 'How long are you staying?']},
+        {scenario:{cn:'投诉协商', en:'Making a complaint and negotiating a solution'}, level:'intermediate', targetChunks:["I'm afraid there's an issue with...", 'Would it be possible to...']}
+      ]
+    },
+    {
+      id: 'workplace-boost',
+      title: '职场英语进阶',
+      subtitle: '4 关 · 从破冰到有理有据地讨论',
+      stages: [
+        {scenario:{cn:'新同事破冰', en:'Small talk with a new colleague'}, level:'intermediate', targetChunks:["I don't think we've met", 'What do you do here?']},
+        {scenario:{cn:'工作会议', en:'A work meeting or status update'}, level:'intermediate', targetChunks:["I'd like to update everyone on...", 'Let me walk you through...']},
+        {scenario:{cn:'观点讨论', en:'Discussing and debating an opinion'}, level:'advanced', targetChunks:['I see your point, but...', 'From my perspective...']},
+        {scenario:{cn:'求职面试', en:'A job interview'}, level:'advanced', targetChunks:['One of my key strengths is...', "I'm particularly drawn to this role because..."]}
+      ]
+    }
+  ];
+  let pathProgress = loadJSON(LS_PATH_PROGRESS, {}); // {pathId: completedStageCount}
+  let activePath = null;
+  let activeStageIndex = 0;
+
+  function renderPathGrid(){
+    pathGrid.innerHTML = '';
+    LEARNING_PATHS.forEach(path=>{
+      const done = pathProgress[path.id] || 0;
+      const card = document.createElement('button');
+      card.className = 'path-card' + (activePath && activePath.id===path.id ? ' active-path' : '');
+      const dots = path.stages.map((_,i)=> `<span class="path-dot ${i<done?'done':(i===done?'current':'')}"></span>`).join('');
+      card.innerHTML = `<div class="path-title">${escapeHtml(path.title)}</div><div class="path-subtitle">${escapeHtml(path.subtitle)}${done>=path.stages.length?' · 🎉 已通关':''}</div><div class="path-progress-dots">${dots}</div>`;
+      card.addEventListener('click', ()=> enterPath(path));
+      pathGrid.appendChild(card);
+    });
+    if(activePath){
+      const quitBtn = document.createElement('button');
+      quitBtn.className = 'path-quit-btn';
+      quitBtn.textContent = '退出路径模式，改为自由练习';
+      quitBtn.addEventListener('click', (e)=>{ e.stopPropagation(); exitPath(); });
+      pathGrid.appendChild(quitBtn);
+    }
+  }
+  function enterPath(path){
+    activePath = path;
+    activeStageIndex = Math.min(pathProgress[path.id] || 0, path.stages.length - 1);
+    const stage = path.stages[activeStageIndex];
+    selectScenario(stage.scenario, null, {fromPath:true});
+    selectLevel(stage.level);
+    startBtn.textContent = `开始第 ${activeStageIndex+1} 关`;
+    renderPathGrid();
+  }
+  function exitPath(){
+    activePath = null;
+    activeStageIndex = 0;
+    startBtn.textContent = '开始对练';
+    renderPathGrid();
+  }
+  function advanceStage(){
+    pathProgress[activePath.id] = Math.max(pathProgress[activePath.id]||0, activeStageIndex+1);
+    saveJSON(LS_PATH_PROGRESS, pathProgress);
+    if(activeStageIndex+1 >= activePath.stages.length){
+      exitPath();
+      reviewScreen.style.display='none';
+      goToSetup();
+      return;
+    }
+    activeStageIndex++;
+    const stage = activePath.stages[activeStageIndex];
+    selectScenario(stage.scenario, null, {fromPath:true});
+    selectLevel(stage.level);
+    startBtn.textContent = `开始第 ${activeStageIndex+1} 关`;
+    reviewScreen.style.display='none';
+    setupScreen.style.display='block';
+    chatScreen.style.display='none';
+    resetBtn.style.display='none';
+    renderPathGrid();
+  }
+  function retryStage(){
+    reviewScreen.style.display='none';
+    startChat();
+  }
+
   scenarioGrid.querySelectorAll('.scenario-card').forEach(card=>{
     card.addEventListener('click', ()=> selectScenario({cn:card.dataset.cn, en:card.dataset.en}, card));
   });
@@ -750,16 +988,19 @@
       scenarioGrid.querySelectorAll('.scenario-card').forEach(c=>c.classList.remove('selected'));
       selectedScenario = {cn:customTopic.value.trim(), en:customTopic.value.trim()};
       startBtn.disabled = false;
+      if(activePath) exitPath();
     } else if(!scenarioGrid.querySelector('.scenario-card.selected')){
       startBtn.disabled = true;
     }
   });
-  function selectScenario(sc, cardEl){
+  function selectScenario(sc, cardEl, opts){
+    opts = opts || {};
     scenarioGrid.querySelectorAll('.scenario-card').forEach(c=>c.classList.remove('selected'));
     if(cardEl) cardEl.classList.add('selected');
     customTopic.value='';
     selectedScenario = sc;
     startBtn.disabled = false;
+    if(!opts.fromPath && activePath) exitPath();
   }
   function selectLevel(lv){
     levelRow.querySelectorAll('.level-pill').forEach(x=>x.classList.toggle('active', x.dataset.level===lv));
@@ -775,6 +1016,7 @@
   function goToSetup(suggestedLevel){
     history = []; sessionCorrections = []; turnCount = 0; lastFailed=null; voiceModeOn=false; updateVoiceToggle();
     msgsWrap.innerHTML = '';
+    exitPath();
     setupScreen.style.display='block';
     chatScreen.style.display='none';
     reviewScreen.style.display='none';
@@ -788,11 +1030,13 @@
     reviewScreen.style.display='none';
     resetBtn.style.display='inline-block';
     bannerScenario.textContent = selectedScenario.cn;
-    bannerLevel.textContent = levelLabel[selectedLevel];
+    bannerLevel.textContent = levelLabel[selectedLevel] + (activePath ? ` · ${activePath.title} 第${activeStageIndex+1}/${activePath.stages.length}关` : '');
     msgsWrap.innerHTML = '';
     history = []; sessionCorrections = []; turnCount = 0;
     fetchTurn(null, true);
   }
+
+  renderPathGrid();
 
   // ---- textarea auto-resize + enter-to-send (shift+enter = newline) ----
   function autoResize(){
@@ -935,20 +1179,24 @@
     if(!def){
       try{
         const data = await callClaudeAPI({
-          model: apiConfig.model, max_tokens: 200,
-          messages: [{role:'user', content: `Define the English word or phrase "${word}" as it's used in this sentence: "${sentence}". Respond ONLY with JSON, no markdown fences: {"en":"one simple English definition, max 15 words","zh":"concise Chinese meaning, max 12 characters"}`}]
+          model: apiConfig.model, max_tokens: 350,
+          messages: [{role:'user', content: `Define the English word or phrase "${word}" as it's used in this sentence: "${sentence}". Respond ONLY with JSON, no markdown fences, no double quotes inside string values (use single quotes if needed): {"en":"one simple English definition, max 15 words","zh":"concise Chinese meaning, max 12 characters","ipa":"IPA phonetic transcription, e.g. /ɪɡˈzæmpəl/","collocations":["2-3 common short collocations or phrases using this word"],"example":"one new natural example sentence using the word, different from the given sentence","category":"one word Chinese topic category this word belongs to, e.g. 食物/旅行/住宿/工作/社交/情绪/其他"}`}]
         }, 2);
         const raw = (data.content||[]).map(b=>b.text||'').join('');
         def = JSON.parse(extractJson(raw));
         wordDefCache.set(cacheKey, def);
       }catch(err){
-        def = {en:'查询失败，再点一次试试', zh:''};
+        def = {en:'查询失败，再点一次试试', zh:'', ipa:'', collocations:[], example:'', category:'其他'};
       }
     }
     if(myToken !== currentPopoverToken) return; // a newer click superseded this one
+    const colloc = (def.collocations||[]).length ? `<div class="wp-colloc"><b>常见搭配：</b>${def.collocations.map(escapeHtml).join('　')}</div>` : '';
+    const example = def.example ? `<div class="wp-example">${escapeHtml(def.example)}</div>` : '';
     wordPopover.innerHTML = `
-      <div class="wp-word">${escapeHtml(word)}</div>
+      <div class="wp-word">${escapeHtml(word)}${def.ipa?` <span class="wp-ipa">${escapeHtml(def.ipa)}</span>`:''}</div>
       <div class="wp-en">${escapeHtml(def.en||'')}</div>
+      ${colloc}
+      ${example}
       <button class="wp-zh-toggle">显示中文释义 ›</button>
       <div class="wp-zh">${escapeHtml(def.zh||'')}</div>
       <div class="wp-actions">
@@ -962,7 +1210,7 @@
     });
     wordPopover.querySelector('.wp-mark').addEventListener('click', (ev)=>{
       ev.stopPropagation();
-      addToVocab({word, en:def.en, zh:def.zh, sentence});
+      addToVocab({word, en:def.en, zh:def.zh, ipa:def.ipa, collocations:def.collocations, example:def.example, category:def.category||'其他', sentence});
       ev.target.textContent = '✓ 已加入';
     });
   }
@@ -1027,12 +1275,18 @@
   }
   function removeTyping(){ const t = document.getElementById('typingRow'); if(t) t.remove(); }
 
-  function addErrorRow(){
+  function addErrorRow(detail){
     const row = document.createElement('div');
     row.className='msg-row ai'; row.id = 'errorRow';
     const err = document.createElement('div');
     err.className='error-row';
     err.textContent = 'AI 好像有点忙，没能回复成功，重试一次就好（这条消息还没发出去，可以先点重试再继续）。';
+    if(detail){
+      const d = document.createElement('div');
+      d.style.cssText = 'margin-top:4px;font-size:11px;opacity:0.75;';
+      d.textContent = '详情：' + detail;
+      err.appendChild(d);
+    }
     row.appendChild(err);
     const tools = document.createElement('div');
     tools.className='row-tools';
@@ -1053,6 +1307,11 @@
     const end = text.lastIndexOf('}');
     if(start===-1 || end===-1 || end<start) throw new Error('no json found in response');
     return text.slice(start, end+1);
+  }
+  function extractField(text, field){
+    const m = text.match(new RegExp('"' + field + '"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"'));
+    if(!m) return null;
+    try{ return JSON.parse('"' + m[1] + '"'); }catch(e){ return m[1]; }
   }
 
   function speakQueue(texts, onAllDone){
@@ -1116,27 +1375,49 @@
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let rec = null;
+  let accumulatedTranscript = '';
+  let manualStop = false;
+  let voiceSessionActive = false;
+  let lastConfidence = null;
   if(SR){
     micBtn.style.display='flex';
-    rec = new SR(); rec.lang='en-US'; rec.interimResults=false;
-    micBtn.addEventListener('click', ()=>{ if(listening){ rec.stop(); return; } startListening(); });
+    rec = new SR(); rec.lang='en-US'; rec.interimResults=true; rec.continuous=true;
+    micBtn.addEventListener('click', ()=>{
+      if(listening){ manualStop = true; voiceSessionActive = false; rec.stop(); return; }
+      startListening();
+    });
     rec.onresult = (e)=>{
-      const result = e.results[0][0];
-      userInput.value = result.transcript;
+      let finalChunk = '', interimChunk = '';
+      for(let i=e.resultIndex; i<e.results.length; i++){
+        const r = e.results[i];
+        if(r.isFinal){ finalChunk += r[0].transcript; if(typeof r[0].confidence==='number' && r[0].confidence>0) lastConfidence = r[0].confidence; }
+        else { interimChunk += r[0].transcript; }
+      }
+      if(finalChunk.trim()) accumulatedTranscript = (accumulatedTranscript + ' ' + finalChunk).trim();
+      userInput.value = (accumulatedTranscript + ' ' + interimChunk).trim();
       autoResize();
       lastInputWasVoice = true;
-      const clarity = (typeof result.confidence === 'number' && result.confidence > 0) ? result.confidence : null;
-      if(voiceModeOn){ sendMessage(clarity); }
-      else { userInput.dataset.clarity = clarity!==null ? clarity : ''; }
     };
-    rec.onend = ()=>{ listening=false; micBtn.classList.remove('active'); };
+    rec.onend = ()=>{
+      listening=false;
+      micBtn.classList.remove('active','listening-pulse');
+      if(!manualStop && voiceSessionActive){
+        try{ rec.start(); listening=true; micBtn.classList.add('active','listening-pulse'); }catch(e){}
+        return;
+      }
+      voiceSessionActive = false;
+      userInput.dataset.clarity = lastConfidence!=null ? lastConfidence : '';
+      if(userInput.value.trim() && autoSendOn){ sendMessage(lastConfidence); }
+    };
     rec.onerror = (e)=>{
-      listening=false; micBtn.classList.remove('active');
+      listening=false; micBtn.classList.remove('active','listening-pulse');
       let msg = '麦克风识别出了点问题，再试一次？';
+      let hardStop = true;
       if(e && e.error === 'not-allowed') msg = '麦克风权限被拒绝了 —— 如果是在 Claude 对话预览里，这可能是预览环境本身没有开放麦克风权限，可以试试发布后的独立页面，或者用本地版打开。';
-      else if(e && e.error === 'no-speech') msg = '没有听到声音，凑近一点再试一次？';
+      else if(e && e.error === 'no-speech'){ msg = ''; hardStop = false; }
       else if(e && e.error === 'network') msg = '语音识别网络异常，请重试。';
-      showMicBanner(msg);
+      if(hardStop){ manualStop = true; voiceSessionActive = false; }
+      if(msg) showMicBanner(msg);
     };
   } else {
     voiceToggle.disabled = true;
@@ -1145,7 +1426,13 @@
   }
   function startListening(){
     if(!rec) return;
-    try{ rec.start(); listening=true; micBtn.classList.add('active'); }
+    manualStop = false;
+    voiceSessionActive = true;
+    accumulatedTranscript = '';
+    lastConfidence = null;
+    userInput.value = '';
+    autoResize();
+    try{ rec.start(); listening=true; micBtn.classList.add('active','listening-pulse'); }
     catch(e){ showMicBanner('麦克风启动失败，请稍后再试。'); }
   }
   function updateVoiceToggle(){
@@ -1156,7 +1443,17 @@
     if(!SR) return;
     voiceModeOn = !voiceModeOn;
     updateVoiceToggle();
-    if(voiceModeOn){ startListening(); } else { if(rec) rec.stop(); window.speechSynthesis.cancel(); }
+    if(voiceModeOn){ startListening(); } else { manualStop=true; voiceSessionActive=false; if(rec) rec.stop(); window.speechSynthesis.cancel(); }
+  });
+
+  let autoSendOn = false;
+  function updateAutoSendToggle(){
+    autoSendToggle.textContent = autoSendOn ? '📤 语音自动发送：开' : '📤 语音自动发送：关';
+    autoSendToggle.classList.toggle('active', autoSendOn);
+  }
+  autoSendToggle.addEventListener('click', ()=>{
+    autoSendOn = !autoSendOn;
+    updateAutoSendToggle();
   });
 
   // ---- API helper with silent auto-retry for transient overload/network errors ----
@@ -1174,12 +1471,13 @@
         const raw = await response.text();
         let data;
         try{ data = JSON.parse(raw); }
-        catch(e){ throw new Error('响应不是有效的 JSON（可能是网络中断或服务暂时不可用）'); }
+        catch(e){ throw new Error(`HTTP ${response.status} · 响应不是有效的 JSON，前 150 字符：${raw.slice(0,150)}`); }
         if(data.error){
           const isOverloaded = data.error.type === 'overloaded_error' || /overload/i.test(data.error.message || '');
           if(isOverloaded && i < attempts - 1){ await sleep(700 * (i + 1)); continue; }
-          throw new Error(data.error.message || '接口返回了错误');
+          throw new Error(`HTTP ${response.status} · ${data.error.message || '接口返回了错误'}`);
         }
+        if(!response.ok){ throw new Error(`HTTP ${response.status} · 请求失败`); }
         return data;
       }catch(err){
         lastErr = err;
@@ -1204,10 +1502,12 @@
 Scenario: "${selectedScenario.en}". ${levelSystemDesc}
 Rules:
 - Stay in character for the scenario. Keep your in-character reply short: 1-3 natural sentences, like real spoken dialogue.
-- ${isOpening ? 'This is the opening line: start the scene naturally. There is no learner message yet, so "corrections" must be an empty array, "encouragement" and "native_version" must be "", and "praise" must be "".' : "After giving your in-character reply, separately evaluate the learner's last message for EVERY grammar, word choice, or naturalness issue, regardless of the learner's level - always point out mistakes fully and honestly, the level only changes your own vocabulary/pace, never how strictly you check the learner. List up to 3 concise corrections if there are real issues. If there are corrections, also write: (1) a short warm one-sentence 'encouragement' in Chinese to say before the corrections (never skip this, always find something genuine and specific to be positive about, e.g. effort, a correct part of the sentence, or good communication despite errors), and (2) a 'native_version' - one natural full sentence in English showing how a native speaker would most naturally express what the learner was trying to say (not just a list of fixes, a real fluent sentence). If the message was already good with no real issues, leave corrections/encouragement/native_version empty and instead write a short one-sentence praise in natural spoken English in the 'praise' field."}
+- ${isOpening ? 'This is the opening line: start the scene naturally. There is no learner message yet, so "corrections" must be an empty array, "encouragement" and "native_version" must be "", and "praise" must be "".' : "After giving your in-character reply, separately evaluate ONLY the learner's most recent message (the very last one, ignore any earlier turns even if the learner asks you to go back and review previous messages) for EVERY grammar, word choice, or naturalness issue, regardless of the learner's level - always point out mistakes fully and honestly, never silently skip a message just because it looks short or simple, the level only changes your own vocabulary/pace, never how strictly or how often you check the learner. List up to 3 concise corrections if there are real issues, all of them about this one most recent message only - never lump together corrections from multiple different past messages into one response. If there are corrections, also write: (1) a short warm one-sentence 'encouragement' in Chinese to say before the corrections (never skip this, always find something genuine and specific to be positive about, e.g. effort, a correct part of the sentence, or good communication despite errors), and (2) a 'native_version' - one natural full sentence in English showing how a native speaker would most naturally express what the learner was trying to say in THIS most recent message (not just a list of fixes, a real fluent sentence, and only for this one message, not a combined rewrite of multiple messages). If the message was already good with no real issues, leave corrections/encouragement/native_version empty and instead write a short one-sentence praise in natural spoken English in the 'praise' field. If the learner explicitly asks you to go back and review earlier messages, gently explain in-character that you can only check their most recent message each turn, and that a full review of everything they've said is available anytime via the '结束并复盘' button."}
+- The learner may write a Chinese word or phrase in parentheses when they don't know how to say it in English, e.g. "I want to (预订) a table". Read the Chinese to understand their intent, then in your correction show the full natural English phrasing that replaces the parenthetical (e.g. original: "I want to (预订) a table" -> suggestion: "I want to book a table"), explaining the vocabulary in the note. Treat this as a normal, expected way learners will write to you, not an error in itself.
 - Never break character in the "reply" field itself - corrections go only in the "corrections" field.
 - The "note" field explaining each correction, and the "encouragement" field, must be written in Chinese.
 - The "praise" and "native_version" fields, if used, must be written in natural spoken English.
+- CRITICAL for valid JSON: inside any string value (reply, note, encouragement, native_version, praise), never use a double quote character ("). If you need to quote a word or phrase within a string, use single quotes (') instead. This is a hard rule - a double quote inside a string value breaks the JSON.
 Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly this shape:
 {"reply": "string", "corrections": [{"original": "string", "suggestion": "string", "note": "short string in Chinese explaining why"}], "encouragement": "string or empty", "native_version": "string or empty", "praise": "string or empty"}`;
 
@@ -1225,10 +1525,14 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly t
       const clean = textOut.replace(/```json|```/g,'').trim();
       let parsed;
       try{ parsed = JSON.parse(extractJson(clean)); }
-      catch(e){ parsed = {reply: clean || "Sorry, could you say that again?", corrections: [], encouragement:"", native_version:"", praise:""}; }
+      catch(e){
+        const fallbackReply = extractField(clean, 'reply');
+        parsed = { reply: fallbackReply || "(Sorry, something went a little wrong there — could you try saying that again?)", corrections: [], encouragement:"", native_version:"", praise:"" };
+      }
 
       removeTyping();
       if(!isOpening) addCorrectionCard(parsed.corrections, parsed.praise, parsed.encouragement, parsed.native_version);
+      if(!isOpening && parsed.native_version) addToChunks(parsed.native_version, selectedScenario.cn);
       addAiBubble(parsed.reply);
       if(!isOpening) turnCount++;
 
@@ -1252,7 +1556,7 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly t
       removeTyping();
       lastFailed = {userText, isOpening};
       userInput.disabled = true;
-      addErrorRow();
+      addErrorRow(err && err.message);
       console.error('ChatCoach API error:', err);
     } finally {
       sendBtn.disabled = false;
@@ -1298,6 +1602,7 @@ Task: analyze the learner's performance and produce a structured review.
 - Suggest one specific next scenario or focus area to practice next (in Chinese, one sentence).
 - Based on how well the learner handled this level, suggest whether their next session level should be "beginner", "intermediate", or "advanced", plus a one-sentence Chinese reason.
 If there were no corrections at all, categories should be an empty array and strengths/overall should praise the clean performance, and the level suggestion should likely move up.
+CRITICAL for valid JSON: inside any string value, never use a double quote character ("). If you need to quote a word or phrase within a string, use single quotes (') instead. This is a hard rule.
 Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this shape:
 {"categories": [{"name":"string","count":number,"examples":[{"original":"string","suggestion":"string"}],"cause":"string","advice":"string"}], "strengths": "string", "overall": "string", "next_focus": "string", "suggested_level": "beginner|intermediate|advanced", "level_reason": "string"}`;
 
@@ -1328,6 +1633,22 @@ Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this s
 
   function renderReview(data){
     let out = '';
+
+    if(activePath){
+      const stage = activePath.stages[activeStageIndex];
+      const avgCorrectionRate = turnCount ? sessionCorrections.length / turnCount : 99;
+      const passed = turnCount >= 4 && avgCorrectionRate <= 1.5;
+      const isLastStage = activeStageIndex + 1 >= activePath.stages.length;
+      out += `<div class="review-hero" style="border:1.5px solid ${passed ? 'var(--praise)' : 'var(--correct)'};">
+        <h3>${passed ? '🎉 通关！' : '💪 还差一点'} · ${escapeHtml(activePath.title)} 第${activeStageIndex+1}/${activePath.stages.length}关</h3>
+        <p>${passed
+          ? (isLastStage ? '这条路径的最后一关也拿下了，整条路径通关完成！' : '这一关的表现达标了，可以进入下一关继续闯。')
+          : `建议：对话轮数满 4 轮、平均每轮纠错控制在 1.5 处以内算通关，本关是 ${turnCount} 轮、${sessionCorrections.length} 处纠正，要不再挑战一次这一关？`}</p>
+        ${stage.targetChunks && stage.targetChunks.length ? `<p style="margin-top:6px;font-size:12px;">本关建议练习表达：${stage.targetChunks.map(c=>`「${escapeHtml(c)}」`).join(' ')}</p>` : ''}
+      </div>`;
+      out += `<button class="next-scenario-btn" id="pathActionBtn">${passed ? (isLastStage ? '🏁 完成路径，返回首页' : '➡️ 进入下一关') : '🔁 重新挑战这一关'}</button>`;
+    }
+
     out += `<div class="review-stats">
       <div class="stat-chip"><div class="num">${turnCount}</div><div class="lbl">对话轮数</div></div>
       <div class="stat-chip"><div class="num">${sessionCorrections.length}</div><div class="lbl">被纠正次数</div></div>
@@ -1352,10 +1673,19 @@ Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this s
     if(data.suggested_level){
       out += `<div class="level-suggest"><span>建议下次难度：<b>${escapeHtml(levelLabel[data.suggested_level]||data.suggested_level)}</b> — ${escapeHtml(data.level_reason||'')}</span></div>`;
     }
-    out += `<button class="next-scenario-btn" id="nextFocusBtn">下一步：${escapeHtml(data.next_focus||'继续练习')}</button>`;
+    if(!activePath){
+      out += `<button class="next-scenario-btn" id="nextFocusBtn">下一步：${escapeHtml(data.next_focus||'继续练习')}</button>`;
+    }
     out += `<button class="export-btn" id="exportReviewBtn">📥 导出本次复盘（Markdown）</button>`;
 
     reviewBody.innerHTML = out;
+
+    const pathActionBtn = document.getElementById('pathActionBtn');
+    if(pathActionBtn){
+      const avgCorrectionRate = turnCount ? sessionCorrections.length / turnCount : 99;
+      const passed = turnCount >= 4 && avgCorrectionRate <= 1.5;
+      pathActionBtn.addEventListener('click', ()=>{ passed ? advanceStage() : retryStage(); });
+    }
     const nextBtn = document.getElementById('nextFocusBtn');
     if(nextBtn){
       nextBtn.addEventListener('click', ()=>{
