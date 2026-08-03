@@ -124,6 +124,12 @@
   .scenario-icon{font-size:19px; display:block; margin-bottom:6px;}
   .scenario-title{font-weight:600; font-size:14px; display:block;}
   .scenario-en{font-size:11px; color:var(--text-dim); display:block; margin-top:2px;}
+  .scenario-grid.collapsed .scenario-card:nth-child(n+5){display:none;}
+  .scenario-expand-btn{
+    background:none; border:1px dashed var(--border); color:var(--accent-strong); cursor:pointer;
+    font-size:12px; padding:8px; border-radius:var(--radius-md); font-family:'Inter',sans-serif;
+  }
+  .scenario-expand-btn:hover{background:var(--bg-panel-2);}
   .path-grid{display:flex; flex-direction:column; gap:10px; margin-bottom:22px;}
   .path-card{
     border:1.5px solid var(--border); border-radius:var(--radius-md); background:var(--bg-panel-2);
@@ -467,7 +473,7 @@
   <!-- SETUP -->
   <div class="setup" id="setupScreen">
     <p class="section-label">选择场景</p>
-    <div class="scenario-grid" id="scenarioGrid">
+    <div class="scenario-grid collapsed" id="scenarioGrid">
       <button class="scenario-card" data-cn="餐厅点餐" data-en="Ordering at a restaurant">
         <span class="scenario-icon">🍽️</span><span class="scenario-title">餐厅点餐</span>
         <span class="scenario-en">Ordering at a restaurant</span>
@@ -508,6 +514,7 @@
         <label for="customTopic" style="font-size:12px;color:var(--text-dim);">或自定义话题，AI 会围绕这个场景来对话</label>
         <input type="text" id="customTopic" placeholder="例如：机场值机、和房东谈租金…">
       </div>
+      <button class="scenario-expand-btn" id="scenarioExpandBtn" style="grid-column:1/-1;">展开更多场景 ›</button>
     </div>
 
     <p class="section-label">🗺️ 或者：闯关学习路径（可选，不选就是上面的自由练习）</p>
@@ -554,7 +561,10 @@
   <div class="review-screen" id="reviewScreen">
     <div class="scenario-banner">
       <span>本次复盘 · <b id="reviewScenario"></b></span>
-      <button class="end-review-btn" id="backToChatBtn">← 返回对话</button>
+      <div style="display:flex; gap:6px;">
+        <button class="end-review-btn" id="backToChatBtn">← 返回对话</button>
+        <button class="end-review-btn" id="backToHomeBtn">🏠 返回主页</button>
+      </div>
     </div>
     <div class="review-body" id="reviewBody">
       <div class="review-loading" id="reviewLoading">正在整理这次对练的表现…</div>
@@ -773,7 +783,7 @@
   // ================= EXPRESSION / CHUNK LIBRARY (persisted, auto-captured from native_version) =================
   let chunkList = loadJSON(LS_CHUNKS, []); // {phrase, scenario, date}
   const CHUNK_COLLAPSE_AT = 6;
-  let chunkExpanded = false;
+  const chunkExpandedScenarios = new Set();
   function addToChunks(phrase, scenarioCn){
     if(!phrase) return;
     if(chunkList.some(c => c.phrase.toLowerCase() === phrase.toLowerCase())) return;
@@ -785,26 +795,45 @@
       chunkListEl.innerHTML = '<div class="settings-empty">对话时说错的句子，会自动把"母语者会怎么说"存在这里，攒多了就是你自己的地道表达库。</div>';
       return;
     }
-    const list = chunkExpanded ? chunkList.slice().reverse() : chunkList.slice(-CHUNK_COLLAPSE_AT).reverse();
-    chunkListEl.innerHTML = '';
-    list.forEach((c)=>{
-      const idx = chunkList.indexOf(c);
-      const row = document.createElement('div');
-      row.className = 'vocab-item';
-      row.innerHTML = `<span><span class="vw" style="font-size:13px;">${escapeHtml(c.phrase)}</span><br><span class="vm">${escapeHtml(c.scenario)} · ${escapeHtml(c.date)}</span></span>`;
-      const del = document.createElement('button');
-      del.textContent = '移除';
-      del.addEventListener('click', ()=>{ chunkList.splice(idx,1); saveJSON(LS_CHUNKS, chunkList); renderChunkList(); });
-      row.appendChild(del);
-      chunkListEl.appendChild(row);
+    const groups = {};
+    chunkList.forEach((c, idx)=>{
+      const scen = c.scenario || '其他';
+      if(!groups[scen]) groups[scen] = [];
+      groups[scen].push({...c, _idx: idx});
     });
-    if(chunkList.length > CHUNK_COLLAPSE_AT){
-      const toggle = document.createElement('button');
-      toggle.className = 'vocab-expand-btn';
-      toggle.textContent = chunkExpanded ? '收起 ‹' : `展开全部 ${chunkList.length} 条 ›`;
-      toggle.addEventListener('click', ()=>{ chunkExpanded = !chunkExpanded; renderChunkList(); });
-      chunkListEl.appendChild(toggle);
-    }
+    chunkListEl.innerHTML = '';
+    Object.keys(groups).forEach(scen=>{
+      const items = groups[scen].slice().reverse();
+      const catHeader = document.createElement('div');
+      catHeader.className = 'vocab-cat-header';
+      catHeader.textContent = `${scen}（${items.length}）`;
+      chunkListEl.appendChild(catHeader);
+
+      const isExpanded = chunkExpandedScenarios.has(scen) || items.length <= CHUNK_COLLAPSE_AT;
+      const visible = isExpanded ? items : items.slice(0, CHUNK_COLLAPSE_AT);
+
+      visible.forEach(c=>{
+        const row = document.createElement('div');
+        row.className = 'vocab-item';
+        row.innerHTML = `<span><span class="vw" style="font-size:13px;">${escapeHtml(c.phrase)}</span><br><span class="vm">${escapeHtml(c.date)}</span></span>`;
+        const del = document.createElement('button');
+        del.textContent = '移除';
+        del.addEventListener('click', ()=>{ chunkList.splice(c._idx,1); saveJSON(LS_CHUNKS, chunkList); renderChunkList(); });
+        row.appendChild(del);
+        chunkListEl.appendChild(row);
+      });
+
+      if(items.length > CHUNK_COLLAPSE_AT){
+        const toggle = document.createElement('button');
+        toggle.className = 'vocab-expand-btn';
+        toggle.textContent = isExpanded ? '收起 ‹' : `展开全部 ${items.length} 条 ›`;
+        toggle.addEventListener('click', ()=>{
+          if(isExpanded) chunkExpandedScenarios.delete(scen); else chunkExpandedScenarios.add(scen);
+          renderChunkList();
+        });
+        chunkListEl.appendChild(toggle);
+      }
+    });
   }
 
   // ================= HISTORY LOG (persisted) =================
@@ -849,6 +878,11 @@
 
   const scenarioGrid = document.getElementById('scenarioGrid');
   const pathGrid = document.getElementById('pathGrid');
+  const scenarioExpandBtn = document.getElementById('scenarioExpandBtn');
+  scenarioExpandBtn.addEventListener('click', ()=>{
+    const collapsed = scenarioGrid.classList.toggle('collapsed');
+    scenarioExpandBtn.textContent = collapsed ? '展开更多场景 ›' : '收起 ‹';
+  });
   const customTopic = document.getElementById('customTopic');
   const levelRow = document.getElementById('levelRow');
   const levelDesc = document.getElementById('levelDesc');
@@ -870,6 +904,7 @@
   const bannerLevel = document.getElementById('bannerLevel');
   const endReviewBtn = document.getElementById('endReviewBtn');
   const backToChatBtn = document.getElementById('backToChatBtn');
+  const backToHomeBtn = document.getElementById('backToHomeBtn');
   const reviewScenarioEl = document.getElementById('reviewScenario');
   const reviewBody = document.getElementById('reviewBody');
   const wordPopover = document.getElementById('wordPopover');
@@ -1379,51 +1414,66 @@
   let manualStop = false;
   let voiceSessionActive = false;
   let lastConfidence = null;
-  if(SR){
-    micBtn.style.display='flex';
-    rec = new SR(); rec.lang='en-US'; rec.interimResults=true; rec.continuous=true;
-    micBtn.addEventListener('click', ()=>{
-      if(listening){ manualStop = true; voiceSessionActive = false; rec.stop(); return; }
-      startListening();
-    });
-    rec.onresult = (e)=>{
-      let finalChunk = '', interimChunk = '';
-      for(let i=e.resultIndex; i<e.results.length; i++){
-        const r = e.results[i];
-        if(r.isFinal){ finalChunk += r[0].transcript; if(typeof r[0].confidence==='number' && r[0].confidence>0) lastConfidence = r[0].confidence; }
-        else { interimChunk += r[0].transcript; }
-      }
-      if(finalChunk.trim()) accumulatedTranscript = (accumulatedTranscript + ' ' + finalChunk).trim();
-      userInput.value = (accumulatedTranscript + ' ' + interimChunk).trim();
-      autoResize();
-      lastInputWasVoice = true;
-    };
-    rec.onend = ()=>{
-      listening=false;
-      micBtn.classList.remove('active','listening-pulse');
-      if(!manualStop && voiceSessionActive){
-        try{ rec.start(); listening=true; micBtn.classList.add('active','listening-pulse'); }catch(e){}
-        return;
-      }
-      voiceSessionActive = false;
-      userInput.dataset.clarity = lastConfidence!=null ? lastConfidence : '';
-      if(userInput.value.trim() && autoSendOn){ sendMessage(lastConfidence); }
-    };
-    rec.onerror = (e)=>{
-      listening=false; micBtn.classList.remove('active','listening-pulse');
-      let msg = '麦克风识别出了点问题，再试一次？';
-      let hardStop = true;
-      if(e && e.error === 'not-allowed') msg = '麦克风权限被拒绝了 —— 如果是在 Claude 对话预览里，这可能是预览环境本身没有开放麦克风权限，可以试试发布后的独立页面，或者用本地版打开。';
-      else if(e && e.error === 'no-speech'){ msg = ''; hardStop = false; }
-      else if(e && e.error === 'network') msg = '语音识别网络异常，请重试。';
-      if(hardStop){ manualStop = true; voiceSessionActive = false; }
-      if(msg) showMicBanner(msg);
-    };
-  } else {
+  try{
+    if(SR){
+      micBtn.style.display='flex';
+      rec = new SR(); rec.lang='en-US'; rec.interimResults=true;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      rec.continuous = !isIOS;
+      micBtn.addEventListener('click', ()=>{
+        try{
+          if(listening){ manualStop = true; voiceSessionActive = false; rec.stop(); return; }
+          startListening();
+        }catch(e){ console.error('ChatCoach mic click error:', e); showMicBanner('麦克风出了点问题，再试一次？'); }
+      });
+      rec.onresult = (e)=>{
+        let finalChunk = '', interimChunk = '';
+        for(let i=e.resultIndex; i<e.results.length; i++){
+          const r = e.results[i];
+          if(r.isFinal){ finalChunk += r[0].transcript; if(typeof r[0].confidence==='number' && r[0].confidence>0) lastConfidence = r[0].confidence; }
+          else { interimChunk += r[0].transcript; }
+        }
+        if(finalChunk.trim()) accumulatedTranscript = (accumulatedTranscript + ' ' + finalChunk).trim();
+        userInput.value = (accumulatedTranscript + ' ' + interimChunk).trim();
+        autoResize();
+        lastInputWasVoice = true;
+      };
+      rec.onend = ()=>{
+        clearTimeout(listeningWatchdog);
+        listening=false;
+        micBtn.classList.remove('active','listening-pulse');
+        if(!manualStop && voiceSessionActive){
+          try{ rec.start(); listening=true; micBtn.classList.add('active','listening-pulse'); }catch(e){}
+          return;
+        }
+        voiceSessionActive = false;
+        userInput.dataset.clarity = lastConfidence!=null ? lastConfidence : '';
+        if(userInput.value.trim() && autoSendOn){ sendMessage(lastConfidence); }
+      };
+      rec.onerror = (e)=>{
+        clearTimeout(listeningWatchdog);
+        listening=false; micBtn.classList.remove('active','listening-pulse');
+        let msg = '麦克风识别出了点问题，再试一次？';
+        let hardStop = true;
+        if(e && e.error === 'not-allowed') msg = '麦克风权限被拒绝了 —— 如果是在 Claude 对话预览里，这可能是预览环境本身没有开放麦克风权限，可以试试发布后的独立页面，或者用本地版打开。';
+        else if(e && e.error === 'no-speech'){ msg = ''; hardStop = false; }
+        else if(e && e.error === 'network') msg = '语音识别网络异常，请重试。';
+        if(hardStop){ manualStop = true; voiceSessionActive = false; }
+        if(msg) showMicBanner(msg);
+      };
+    } else {
+      voiceToggle.disabled = true;
+      voiceToggle.title = '当前浏览器不支持语音识别，语音对话模式不可用（可尝试 Chrome）';
+      micBtn.style.display = 'none';
+    }
+  }catch(err){
+    console.error('ChatCoach voice setup failed, disabling voice features:', err);
+    rec = null;
     voiceToggle.disabled = true;
-    voiceToggle.title = '当前浏览器不支持语音识别，语音对话模式不可用（可尝试 Chrome）';
+    voiceToggle.title = '当前设备的语音识别初始化失败，语音功能不可用';
     micBtn.style.display = 'none';
   }
+  let listeningWatchdog = null;
   function startListening(){
     if(!rec) return;
     manualStop = false;
@@ -1433,17 +1483,36 @@
     userInput.value = '';
     autoResize();
     try{ rec.start(); listening=true; micBtn.classList.add('active','listening-pulse'); }
-    catch(e){ showMicBanner('麦克风启动失败，请稍后再试。'); }
+    catch(e){ showMicBanner('麦克风启动失败，请稍后再试。'); return; }
+    clearTimeout(listeningWatchdog);
+    listeningWatchdog = setTimeout(()=>{
+      if(listening){
+        manualStop = true; voiceSessionActive = false; listening = false;
+        micBtn.classList.remove('active','listening-pulse');
+        try{ rec.stop(); }catch(e){}
+        showMicBanner('识别超时自动停止了，可以再点一次麦克风重新开始。');
+      }
+    }, 20000);
   }
   function updateVoiceToggle(){
     voiceToggle.textContent = voiceModeOn ? '🎧 语音对话模式：开' : '🎧 语音对话模式：关';
     voiceToggle.classList.toggle('active', voiceModeOn);
   }
   voiceToggle.addEventListener('click', ()=>{
-    if(!SR) return;
-    voiceModeOn = !voiceModeOn;
-    updateVoiceToggle();
-    if(voiceModeOn){ startListening(); } else { manualStop=true; voiceSessionActive=false; if(rec) rec.stop(); window.speechSynthesis.cancel(); }
+    try{
+      if(!SR || !rec) return;
+      voiceModeOn = !voiceModeOn;
+      updateVoiceToggle();
+      if(voiceModeOn){ startListening(); }
+      else {
+        manualStop=true; voiceSessionActive=false;
+        clearTimeout(listeningWatchdog);
+        listening=false;
+        micBtn.classList.remove('active','listening-pulse');
+        try{ rec.stop(); }catch(e){}
+        window.speechSynthesis.cancel();
+      }
+    }catch(e){ console.error('ChatCoach voice toggle error:', e); }
   });
 
   let autoSendOn = false;
@@ -1519,14 +1588,18 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly t
       sendBtn.disabled = false; return;
     }
     try{
-      const data = await callClaudeAPI({ model: apiConfig.model, max_tokens: 1200, system: systemPrompt, messages: apiMessages });
-
-      const textOut = (data.content||[]).map(b=>b.text||'').join('');
-      const clean = textOut.replace(/```json|```/g,'').trim();
-      let parsed;
-      try{ parsed = JSON.parse(extractJson(clean)); }
-      catch(e){
-        const fallbackReply = extractField(clean, 'reply');
+      let parsed = null;
+      let lastCleanText = '';
+      for(let attempt=0; attempt<2 && !parsed; attempt++){
+        const data = await callClaudeAPI({ model: apiConfig.model, max_tokens: 1500, system: systemPrompt, messages: apiMessages });
+        const textOut = (data.content||[]).map(b=>b.text||'').join('');
+        const clean = textOut.replace(/```json|```/g,'').trim();
+        lastCleanText = clean;
+        try{ parsed = JSON.parse(extractJson(clean)); }
+        catch(e){ parsed = null; }
+      }
+      if(!parsed){
+        const fallbackReply = extractField(lastCleanText, 'reply');
         parsed = { reply: fallbackReply || "(Sorry, something went a little wrong there — could you try saying that again?)", corrections: [], encouragement:"", native_version:"", praise:"" };
       }
 
@@ -1542,12 +1615,9 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly t
       userInput.disabled = false;
       userInput.placeholder = '用英语回复看看…';
 
-      const toSpeak = [parsed.reply];
-      if(parsed.corrections && parsed.corrections.length){
-        parsed.corrections.forEach(c=>{
-          toSpeak.push(`Quick tip: instead of saying "${c.original}", try saying "${c.suggestion}".`);
-        });
-      }
+      const toSpeak = [];
+      if(parsed.reply) toSpeak.push(parsed.reply);
+      if(parsed.native_version) toSpeak.push(`Here's a more natural way to say it: ${parsed.native_version}`);
       if(voiceModeOn || autoSpeakOn){
         speakQueue(toSpeak, ()=>{ if(voiceModeOn) startListening(); });
       }
@@ -1569,6 +1639,10 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly t
   backToChatBtn.addEventListener('click', ()=>{
     reviewScreen.style.display='none';
     chatScreen.style.display='flex';
+  });
+  backToHomeBtn.addEventListener('click', ()=>{
+    reviewScreen.style.display='none';
+    goToSetup();
   });
 
   let lastReviewData = null;
