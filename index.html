@@ -70,7 +70,7 @@
   }
 
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;height:100%;}
+  html,body{margin:0;padding:0;height:100%;overflow-x:hidden;}
   body{
     background:var(--bg); font-family:'Inter','Noto Sans SC',sans-serif; color:var(--text);
     min-height:100vh; display:flex; align-items:stretch; justify-content:center;
@@ -246,9 +246,9 @@
 
   .input-bar{display:flex; gap:8px; padding:12px 16px 16px; border-top:1px solid var(--border); align-items:flex-end;}
   .input-bar textarea{
-    flex:1; background:var(--bg-panel-2); border:1.5px solid var(--border); border-radius:18px;
+    flex:1; min-width:0; width:0; background:var(--bg-panel-2); border:1.5px solid var(--border); border-radius:18px;
     padding:11px 16px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px;
-    resize:none; max-height:120px; overflow-y:auto; line-height:1.4;
+    resize:none; max-height:120px; overflow-y:auto; line-height:1.4; word-break:break-word;
   }
   .input-bar textarea:focus{outline:none; border-color:var(--accent);}
   .input-bar textarea:disabled{opacity:0.55; cursor:not-allowed;}
@@ -297,9 +297,16 @@
   .word-popover{
     position:fixed; z-index:100; background:var(--bg-panel); border:1px solid var(--border);
     border-radius:12px; padding:12px 14px; box-shadow:0 12px 30px rgba(0,0,0,0.18); max-width:290px;
-    font-size:13px; display:none; max-height:70vh; overflow-y:auto;
+    font-size:13px; display:none; max-height:70vh; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y;
   }
   .word-popover.show{display:block;}
+  .word-popover .wp-speak{background:none; border:none; cursor:pointer; font-size:13px; padding:0 0 0 4px; vertical-align:middle;}
+  @media (max-width: 640px){
+    .word-popover{
+      position:fixed !important; left:12px !important; right:12px; top:auto !important; bottom:12px !important;
+      width:auto; max-width:none; max-height:55vh;
+    }
+  }
   .word-popover .wp-word{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; margin-bottom:4px;}
   .word-popover .wp-ipa{font-weight:400; font-size:12px; color:var(--text-dim); font-family:'Inter',sans-serif;}
   .word-popover .wp-en{color:var(--text); margin-bottom:6px; line-height:1.4;}
@@ -373,9 +380,26 @@
   .settings-header h3{margin:0; font-family:'Space Grotesk',sans-serif; font-size:16px;}
   .settings-close{background:none; border:none; color:var(--text-dim); font-size:18px; cursor:pointer;}
   .settings-body{padding:16px 18px; overflow-y:auto;}
-  .settings-section{margin-bottom:20px;}
+  .settings-section{margin-bottom:10px; border:1px solid var(--border); border-radius:12px; overflow:hidden;}
   .settings-section:last-child{margin-bottom:0;}
   .settings-section-title{font-family:'Space Grotesk',sans-serif; font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); margin:0 0 10px;}
+  .settings-section-header{
+    width:100%; display:flex; justify-content:space-between; align-items:center;
+    background:var(--bg-panel-2); border:none; cursor:pointer; padding:12px 14px;
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px; color:var(--text);
+  }
+  .ssh-left{display:flex; align-items:center; gap:9px;}
+  .ssh-dot{width:9px; height:9px; border-radius:50%; background:var(--dot-color, var(--accent)); flex-shrink:0;}
+  .ssh-badge{font-size:10.5px; font-weight:600; color:var(--praise); background:var(--praise-dim); padding:2px 8px; border-radius:8px;}
+  .ssh-chev{color:var(--text-dim); font-size:14px; transition:transform .15s;}
+  .settings-section-header.open .ssh-chev{transform:rotate(90deg);}
+  .settings-section-body{display:none; padding:14px;}
+  .settings-section-body.open{display:block;}
+  .manual-add-row{display:flex; gap:8px; margin-bottom:12px;}
+  .manual-add-row input{
+    flex:1; min-width:0; background:var(--bg-panel-2); border:1.5px solid var(--border); border-radius:10px;
+    padding:8px 11px; color:var(--text); font-size:12.5px; font-family:'Inter',sans-serif;
+  }
   .theme-swatches{display:flex; gap:8px; flex-wrap:wrap;}
   .theme-swatch{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;}
   .theme-swatch[data-t="apple"]{background:#0071E3;}
@@ -584,45 +608,79 @@
     </div>
     <div class="settings-body">
       <div class="settings-section">
-        <p class="settings-section-title">API 设置</p>
-        <div class="key-warning" id="keyWarning">还没有配置 API Key，无法开始对话。</div>
-        <label class="settings-label" for="baseUrlInput">API Base URL</label>
-        <input type="text" id="baseUrlInput" class="settings-input" placeholder="https://api.anthropic.com">
-        <label class="settings-label" for="modelInput">模型名称</label>
-        <input type="text" id="modelInput" class="settings-input" placeholder="claude-sonnet-5">
-        <label class="settings-label" for="apiKeyInput">API Key</label>
-        <input type="password" id="apiKeyInput" class="settings-input" placeholder="sk-ant-...">
-        <button class="settings-btn" id="saveApiBtn">保存 API 设置</button>
-        <p class="settings-note">信息只保存在你这台电脑的浏览器本地，不会上传。官方 Anthropic 接口国内直连通常需要科学上网；国内可直连的选项可以填智谱等 Claude 兼容中转地址，如 https://open.bigmodel.cn/api/anthropic。</p>
-      </div>
-      <div class="settings-section">
-        <p class="settings-section-title">外观</p>
-        <div class="theme-swatches" id="themeSwatches">
-          <button class="theme-swatch active" data-t="apple" title="Apple 风"></button>
-          <button class="theme-swatch" data-t="mono" title="Mono 风"></button>
-          <button class="theme-swatch" data-t="sage" title="Sage"></button>
-          <button class="theme-swatch" data-t="sky" title="Sky"></button>
-          <button class="theme-swatch" data-t="lavender" title="Lavender"></button>
-          <button class="theme-swatch" data-t="noir" title="Noir"></button>
+        <button class="settings-section-header" data-color="#0071E3">
+          <span class="ssh-left"><span class="ssh-dot"></span>API 设置<span class="ssh-badge" id="apiStatusBadge"></span></span>
+          <span class="ssh-chev">›</span>
+        </button>
+        <div class="settings-section-body">
+          <div class="key-warning" id="keyWarning">还没有配置 API Key，无法开始对话。</div>
+          <label class="settings-label" for="baseUrlInput">API Base URL</label>
+          <input type="text" id="baseUrlInput" class="settings-input" placeholder="https://api.anthropic.com">
+          <label class="settings-label" for="modelInput">模型名称</label>
+          <input type="text" id="modelInput" class="settings-input" placeholder="claude-sonnet-5">
+          <label class="settings-label" for="apiKeyInput">API Key</label>
+          <input type="password" id="apiKeyInput" class="settings-input" placeholder="sk-ant-...">
+          <button class="settings-btn" id="saveApiBtn">保存 API 设置</button>
+          <p class="settings-note">信息只保存在你这台电脑的浏览器本地，不会上传。官方 Anthropic 接口国内直连通常需要科学上网；国内可直连的选项可以填智谱等 Claude 兼容中转地址，如 https://open.bigmodel.cn/api/anthropic。</p>
         </div>
       </div>
       <div class="settings-section">
-        <p class="settings-section-title">生词本（长期保存）</p>
-        <div id="vocabListEl"><div class="settings-empty">还没有标记过生词，点单词或点复盘里的"标记不认识"试试。</div></div>
+        <button class="settings-section-header" data-color="#9B8CE0">
+          <span class="ssh-left"><span class="ssh-dot"></span>外观</span>
+          <span class="ssh-chev">›</span>
+        </button>
+        <div class="settings-section-body">
+          <div class="theme-swatches" id="themeSwatches">
+            <button class="theme-swatch active" data-t="apple" title="Apple 风"></button>
+            <button class="theme-swatch" data-t="mono" title="Mono 风"></button>
+            <button class="theme-swatch" data-t="sage" title="Sage"></button>
+            <button class="theme-swatch" data-t="sky" title="Sky"></button>
+            <button class="theme-swatch" data-t="lavender" title="Lavender"></button>
+            <button class="theme-swatch" data-t="noir" title="Noir"></button>
+          </div>
+        </div>
       </div>
       <div class="settings-section">
-        <p class="settings-section-title">常用表达库（长期保存）</p>
-        <div id="chunkListEl"></div>
+        <button class="settings-section-header" data-color="#128A5E">
+          <span class="ssh-left"><span class="ssh-dot"></span>生词本（长期保存）</span>
+          <span class="ssh-chev">›</span>
+        </button>
+        <div class="settings-section-body">
+          <div id="vocabListEl"><div class="settings-empty">还没有标记过生词，点单词或点复盘里的"标记不认识"试试。</div></div>
+        </div>
       </div>
       <div class="settings-section">
-        <p class="settings-section-title">历史回顾</p>
-        <div id="historyListEl"><div class="settings-empty">完成一次"结束并复盘"后，会自动记录在这里。</div></div>
-        <button class="settings-btn" id="trendSummaryBtn">📈 生成阶段性总结</button>
-        <div id="trendResultEl"></div>
+        <button class="settings-section-header" data-color="#E8935A">
+          <span class="ssh-left"><span class="ssh-dot"></span>常用表达库（长期保存）</span>
+          <span class="ssh-chev">›</span>
+        </button>
+        <div class="settings-section-body">
+          <div class="manual-add-row">
+            <input type="text" id="manualChunkInput" placeholder="手动输入一个词组/句子加入表达库…">
+            <button class="settings-btn" id="manualChunkAddBtn" style="width:auto; margin-top:0;">➕ 加入</button>
+          </div>
+          <div id="chunkListEl"></div>
+        </div>
       </div>
       <div class="settings-section">
-        <p class="settings-section-title">数据管理</p>
-        <button class="settings-btn danger" id="clearDataBtn">清除本地全部数据（生词本 / 历史 / API 设置）</button>
+        <button class="settings-section-header" data-color="#0284C7">
+          <span class="ssh-left"><span class="ssh-dot"></span>历史回顾</span>
+          <span class="ssh-chev">›</span>
+        </button>
+        <div class="settings-section-body">
+          <div id="historyListEl"><div class="settings-empty">完成一次"结束并复盘"后，会自动记录在这里。</div></div>
+          <button class="settings-btn" id="trendSummaryBtn">📈 生成阶段性总结</button>
+          <div id="trendResultEl"></div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <button class="settings-section-header" data-color="#E0433D">
+          <span class="ssh-left"><span class="ssh-dot"></span>数据管理</span>
+          <span class="ssh-chev">›</span>
+        </button>
+        <div class="settings-section-body">
+          <button class="settings-btn danger" id="clearDataBtn">清除本地全部数据（生词本 / 历史 / API 设置）</button>
+        </div>
       </div>
     </div>
   </div>
@@ -679,11 +737,32 @@
   const saveApiBtn = document.getElementById('saveApiBtn');
   const keyWarning = document.getElementById('keyWarning');
 
+  // ---- collapsible settings sections ----
+  document.querySelectorAll('.settings-section-header').forEach(header=>{
+    const color = header.dataset.color;
+    if(color) header.querySelector('.ssh-dot').style.setProperty('--dot-color', color);
+    const body = header.nextElementSibling;
+    header.addEventListener('click', ()=>{
+      const isOpen = header.classList.toggle('open');
+      body.classList.toggle('open', isOpen);
+    });
+  });
+  const apiSectionHeader = document.querySelectorAll('.settings-section-header')[0];
+  const apiStatusBadge = document.getElementById('apiStatusBadge');
+
   function openSettings(){
     baseUrlInput.value = apiConfig.baseUrl || 'https://api.anthropic.com';
     modelInput.value = apiConfig.model || 'claude-sonnet-5';
     apiKeyInput.value = apiConfig.apiKey || '';
     keyWarning.style.display = apiConfig.apiKey ? 'none' : 'block';
+    apiStatusBadge.textContent = apiConfig.apiKey ? '已配置' : '未配置';
+    apiStatusBadge.style.display = apiConfig.apiKey ? 'inline-block' : 'none';
+    // first-time (no key yet) -> expand the API section by default so it's easy to find;
+    // once a key is already saved, keep it collapsed since it rarely needs revisiting
+    if(!apiConfig.apiKey && !apiSectionHeader.classList.contains('open')){
+      apiSectionHeader.classList.add('open');
+      apiSectionHeader.nextElementSibling.classList.add('open');
+    }
     renderVocabList();
     renderChunkList();
     renderHistoryList();
@@ -701,6 +780,20 @@
     };
     saveJSON(LS_CONFIG, apiConfig);
     keyWarning.style.display = apiConfig.apiKey ? 'none' : 'block';
+    apiStatusBadge.textContent = apiConfig.apiKey ? '已配置' : '未配置';
+    apiStatusBadge.style.display = apiConfig.apiKey ? 'inline-block' : 'none';
+    const originalText = saveApiBtn.textContent;
+    const originalBg = saveApiBtn.style.background;
+    saveApiBtn.textContent = '✓ 已保存';
+    saveApiBtn.style.background = 'var(--praise)';
+    saveApiBtn.style.color = '#fff';
+    saveApiBtn.style.borderColor = 'var(--praise)';
+    setTimeout(()=>{
+      saveApiBtn.textContent = originalText;
+      saveApiBtn.style.background = originalBg;
+      saveApiBtn.style.color = '';
+      saveApiBtn.style.borderColor = '';
+    }, 1600);
   });
   if(!apiConfig.apiKey){ setTimeout(openSettings, 300); }
 
@@ -835,6 +928,16 @@
       }
     });
   }
+  const manualChunkInput = document.getElementById('manualChunkInput');
+  const manualChunkAddBtn = document.getElementById('manualChunkAddBtn');
+  manualChunkAddBtn.addEventListener('click', ()=>{
+    const text = manualChunkInput.value.trim();
+    if(!text) return;
+    addToChunks(text, selectedScenario ? selectedScenario.cn : '手动添加');
+    manualChunkInput.value = '';
+    renderChunkList();
+  });
+  manualChunkInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); manualChunkAddBtn.click(); } });
 
   // ================= HISTORY LOG (persisted) =================
   let historyList = loadJSON(LS_HISTORY, []); // {date, scenarioCn, level, turnCount, correctionsCount, overall}
@@ -1153,7 +1256,20 @@
     const speakBtn = document.createElement('button');
     speakBtn.className = 'speaker-btn';
     speakBtn.textContent = '🔊 朗读';
-    speakBtn.addEventListener('click', ()=> speakQueue([text], ()=>{}));
+    speakBtn.addEventListener('click', ()=>{
+      if(currentlySpeakingBtn === speakBtn && window.speechSynthesis.speaking){
+        window.speechSynthesis.cancel();
+        currentlySpeakingBtn = null;
+        speakBtn.textContent = '🔊 朗读';
+        return;
+      }
+      if(currentlySpeakingBtn) currentlySpeakingBtn.textContent = '🔊 朗读';
+      currentlySpeakingBtn = speakBtn;
+      speakBtn.textContent = '⏸ 停止';
+      speakQueue([text], ()=>{
+        if(currentlySpeakingBtn === speakBtn){ speakBtn.textContent = '🔊 朗读'; currentlySpeakingBtn = null; }
+      });
+    });
     tools.appendChild(speakBtn);
 
     const translateBtn = document.createElement('button');
@@ -1214,30 +1330,36 @@
     if(!def){
       try{
         const data = await callClaudeAPI({
-          model: apiConfig.model, max_tokens: 350,
-          messages: [{role:'user', content: `Define the English word or phrase "${word}" as it's used in this sentence: "${sentence}". Respond ONLY with JSON, no markdown fences, no double quotes inside string values (use single quotes if needed): {"en":"one simple English definition, max 15 words","zh":"concise Chinese meaning, max 12 characters","ipa":"IPA phonetic transcription, e.g. /ɪɡˈzæmpəl/","collocations":["2-3 common short collocations or phrases using this word"],"example":"one new natural example sentence using the word, different from the given sentence","category":"one word Chinese topic category this word belongs to, e.g. 食物/旅行/住宿/工作/社交/情绪/其他"}`}]
+          model: apiConfig.model, max_tokens: 450,
+          messages: [{role:'user', content: `Define the English word or phrase "${word}" as it's used in this sentence: "${sentence}". Respond ONLY with JSON, no markdown fences, no double quotes inside string values (use single quotes if needed): {"en":"one simple English definition, max 15 words","zh":"concise Chinese meaning, max 12 characters","ipa":"IPA phonetic transcription, e.g. /ɪɡˈzæmpəl/","collocations":["2-3 common short collocations or phrases using this word"],"collocations_zh":["matching Chinese meaning for each collocation above, same order"],"example":"one new natural example sentence using the word, different from the given sentence","example_zh":"Chinese translation of that example sentence","category":"one word Chinese topic category this word belongs to, e.g. 食物/旅行/住宿/工作/社交/情绪/其他"}`}]
         }, 2);
         const raw = (data.content||[]).map(b=>b.text||'').join('');
         def = JSON.parse(extractJson(raw));
         wordDefCache.set(cacheKey, def);
       }catch(err){
-        def = {en:'查询失败，再点一次试试', zh:'', ipa:'', collocations:[], example:'', category:'其他'};
+        def = {en:'查询失败，再点一次试试', zh:'', ipa:'', collocations:[], collocations_zh:[], example:'', example_zh:'', category:'其他'};
       }
     }
     if(myToken !== currentPopoverToken) return; // a newer click superseded this one
     const colloc = (def.collocations||[]).length ? `<div class="wp-colloc"><b>常见搭配：</b>${def.collocations.map(escapeHtml).join('　')}</div>` : '';
     const example = def.example ? `<div class="wp-example">${escapeHtml(def.example)}</div>` : '';
+    const collocZhLine = (def.collocations_zh||[]).length ? `<div style="margin-top:4px;">${def.collocations.map((c,i)=>`${escapeHtml(c)}：${escapeHtml(def.collocations_zh[i]||'')}`).join('；')}</div>` : '';
+    const exampleZhLine = def.example_zh ? `<div style="margin-top:4px;">${escapeHtml(def.example_zh)}</div>` : '';
     wordPopover.innerHTML = `
-      <div class="wp-word">${escapeHtml(word)}${def.ipa?` <span class="wp-ipa">${escapeHtml(def.ipa)}</span>`:''}</div>
+      <div class="wp-word">${escapeHtml(word)}${def.ipa?` <span class="wp-ipa">${escapeHtml(def.ipa)}</span>`:''} <button class="wp-speak">🔊</button></div>
       <div class="wp-en">${escapeHtml(def.en||'')}</div>
       ${colloc}
       ${example}
       <button class="wp-zh-toggle">显示中文释义 ›</button>
-      <div class="wp-zh">${escapeHtml(def.zh||'')}</div>
+      <div class="wp-zh">${escapeHtml(def.zh||'')}${collocZhLine}${exampleZhLine}</div>
       <div class="wp-actions">
         <button class="wp-mark">🔖 加入生词本</button>
       </div>
     `;
+    wordPopover.querySelector('.wp-speak').addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      speakQueue([word], ()=>{});
+    });
     wordPopover.querySelector('.wp-zh-toggle').addEventListener('click', (ev)=>{
       ev.stopPropagation();
       const zh = wordPopover.querySelector('.wp-zh');
@@ -1273,13 +1395,35 @@
       corrections.forEach(c=>{
         const item = document.createElement('div');
         item.className = 'correction-item';
-        item.innerHTML = `<div class="line"><span class="orig">${escapeHtml(c.original)}</span><span class="arrow">→</span><span>${escapeHtml(c.suggestion)}</span></div>${c.note?`<div class="note">${escapeHtml(c.note)}</div>`:''}`;
+        const line = document.createElement('div');
+        line.className = 'line';
+        const origSpan = document.createElement('span');
+        origSpan.className = 'orig';
+        origSpan.textContent = c.original;
+        const arrow = document.createElement('span');
+        arrow.className = 'arrow';
+        arrow.textContent = '→';
+        const suggestSpan = document.createElement('span');
+        renderWordTokens(suggestSpan, c.suggestion);
+        line.appendChild(origSpan); line.appendChild(arrow); line.appendChild(suggestSpan);
+        item.appendChild(line);
+        if(c.note){
+          const note = document.createElement('div');
+          note.className = 'note';
+          note.textContent = c.note;
+          item.appendChild(note);
+        }
         body.appendChild(item);
       });
       if(nativeVersion){
         const nv = document.createElement('div');
         nv.className = 'native-version';
-        nv.innerHTML = `<b>🗣️ 母语者可能会这样说：</b><div class="nv-text">${escapeHtml(nativeVersion)}</div>`;
+        const label = document.createElement('b');
+        label.textContent = '🗣️ 母语者可能会这样说：';
+        const nvText = document.createElement('div');
+        nvText.className = 'nv-text';
+        renderWordTokens(nvText, nativeVersion);
+        nv.appendChild(label); nv.appendChild(nvText);
         body.appendChild(nv);
       }
 
@@ -1349,6 +1493,7 @@
     try{ return JSON.parse('"' + m[1] + '"'); }catch(e){ return m[1]; }
   }
 
+  let currentlySpeakingBtn = null;
   function speakQueue(texts, onAllDone){
     if(!('speechSynthesis' in window) || !texts.length){ onAllDone && onAllDone(); return; }
     window.speechSynthesis.cancel();
@@ -1367,19 +1512,45 @@
   }
 
   let selectedVoice = null;
+  const RECOMMENDED_VOICE_NAMES = ['samantha','daniel','karen','moira','tessa','ava','alex','susan','fiona','serena',
+    'stephanie','allison','nicky','catherine','martha','oliver','arthur','rishi','aaron','google us english',
+    'google uk english female','google uk english male','microsoft zira','microsoft david','microsoft mark'];
+  const NOVELTY_VOICE_NAMES = ['organ','pipe organ','bells','albert','bad news','bahh','boing','bubbles','cellos',
+    'deranged','good news','hysterical','jester','junior','ralph','rocko','sandy','shelley','trinoids','whisper',
+    'wobble','zarvox','superstar','bad news'];
   function populateVoices(){
     if(!('speechSynthesis' in window)) return;
     const voices = window.speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
     const list = voices.length ? voices : window.speechSynthesis.getVoices();
     if(!list.length) return;
-    voiceSelect.innerHTML = '';
+
+    const recommended = [], normal = [], novelty = [];
     list.forEach((v, idx)=>{
-      const opt = document.createElement('option');
-      opt.value = idx;
-      opt.textContent = `${v.name} (${v.lang})`;
-      voiceSelect.appendChild(opt);
+      const n = v.name.toLowerCase();
+      if(NOVELTY_VOICE_NAMES.some(x => n.includes(x))) novelty.push({v, idx});
+      else if(RECOMMENDED_VOICE_NAMES.some(x => n.includes(x))) recommended.push({v, idx});
+      else normal.push({v, idx});
     });
-    selectedVoice = list[0];
+
+    voiceSelect.innerHTML = '';
+    function addGroup(label, items, star){
+      if(!items.length) return;
+      const group = document.createElement('optgroup');
+      group.label = label;
+      items.forEach(({v, idx})=>{
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = `${star ? '⭐ ' : ''}${v.name} (${v.lang})`;
+        group.appendChild(opt);
+      });
+      voiceSelect.appendChild(group);
+    }
+    addGroup('⭐ 推荐（自然音色）', recommended, true);
+    addGroup('其他音色', normal, false);
+    addGroup('更多音色（特殊音效，个性化选择）', novelty, false);
+
+    selectedVoice = (recommended[0] || normal[0] || novelty[0] || {v:list[0]}).v;
+    voiceSelect.value = (recommended[0] || normal[0] || novelty[0] || {idx:0}).idx;
     voiceSelect.onchange = ()=>{ selectedVoice = list[voiceSelect.value]; };
   }
   if('speechSynthesis' in window){
@@ -1414,12 +1585,17 @@
   let manualStop = false;
   let voiceSessionActive = false;
   let lastConfidence = null;
+  let recBusy = false; // guards against overlapping start() calls, which throw InvalidStateError on some browsers
   try{
     if(SR){
       micBtn.style.display='flex';
       rec = new SR(); rec.lang='en-US'; rec.interimResults=true;
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      rec.continuous = !isIOS;
+      // Auto-restart-on-pause (continuous mode / restart-on-silence) turned out to be unreliable
+      // across mobile Safari versions - it could leave the recognizer in a stuck "busy" state that
+      // then made every subsequent start() throw, showing "麦克风启动失败" repeatedly. We now always
+      // treat a stop (silence or manual) as final, which is far more robust even though it means a
+      // long pause mid-sentence will end that turn instead of seamlessly continuing.
+      rec.continuous = false;
       micBtn.addEventListener('click', ()=>{
         try{
           if(listening){ manualStop = true; voiceSessionActive = false; rec.stop(); return; }
@@ -1441,29 +1617,26 @@
       rec.onend = ()=>{
         clearTimeout(listeningWatchdog);
         listening=false;
-        micBtn.classList.remove('active','listening-pulse');
-        if(!manualStop && voiceSessionActive){
-          try{ rec.start(); listening=true; micBtn.classList.add('active','listening-pulse'); }catch(e){}
-          return;
-        }
+        recBusy = false;
         voiceSessionActive = false;
+        micBtn.classList.remove('active','listening-pulse');
         userInput.dataset.clarity = lastConfidence!=null ? lastConfidence : '';
         if(userInput.value.trim() && autoSendOn){ sendMessage(lastConfidence); }
       };
       rec.onerror = (e)=>{
         clearTimeout(listeningWatchdog);
-        listening=false; micBtn.classList.remove('active','listening-pulse');
+        listening=false; recBusy = false; micBtn.classList.remove('active','listening-pulse');
         let msg = '麦克风识别出了点问题，再试一次？';
         let hardStop = true;
-        if(e && e.error === 'not-allowed') msg = '麦克风权限被拒绝了 —— 如果是在 Claude 对话预览里，这可能是预览环境本身没有开放麦克风权限，可以试试发布后的独立页面，或者用本地版打开。';
-        else if(e && e.error === 'no-speech'){ msg = ''; hardStop = false; }
+        if(e && e.error === 'not-allowed') msg = '麦克风权限被拒绝了 —— 请检查浏览器/系统的麦克风权限设置并允许访问。';
+        else if(e && e.error === 'no-speech'){ msg = '没有听到声音，再点一次麦克风试试？'; hardStop = true; }
         else if(e && e.error === 'network') msg = '语音识别网络异常，请重试。';
         if(hardStop){ manualStop = true; voiceSessionActive = false; }
         if(msg) showMicBanner(msg);
       };
     } else {
       voiceToggle.disabled = true;
-      voiceToggle.title = '当前浏览器不支持语音识别，语音对话模式不可用（可尝试 Chrome）';
+      voiceToggle.title = '当前浏览器不支持语音识别，语音对话模式不可用（可尝试 Chrome，部分旧版本 iOS Safari 也不支持）';
       micBtn.style.display = 'none';
     }
   }catch(err){
@@ -1475,19 +1648,20 @@
   }
   let listeningWatchdog = null;
   function startListening(){
-    if(!rec) return;
+    if(!rec || recBusy) return;
     manualStop = false;
     voiceSessionActive = true;
     accumulatedTranscript = '';
     lastConfidence = null;
     userInput.value = '';
     autoResize();
+    recBusy = true;
     try{ rec.start(); listening=true; micBtn.classList.add('active','listening-pulse'); }
-    catch(e){ showMicBanner('麦克风启动失败，请稍后再试。'); return; }
+    catch(e){ recBusy = false; showMicBanner('麦克风启动失败，请等一两秒再试一次。'); return; }
     clearTimeout(listeningWatchdog);
     listeningWatchdog = setTimeout(()=>{
       if(listening){
-        manualStop = true; voiceSessionActive = false; listening = false;
+        manualStop = true; voiceSessionActive = false; listening = false; recBusy = false;
         micBtn.classList.remove('active','listening-pulse');
         try{ rec.stop(); }catch(e){}
         showMicBanner('识别超时自动停止了，可以再点一次麦克风重新开始。');
@@ -1505,7 +1679,7 @@
       updateVoiceToggle();
       if(voiceModeOn){ startListening(); }
       else {
-        manualStop=true; voiceSessionActive=false;
+        manualStop=true; voiceSessionActive=false; recBusy=false;
         clearTimeout(listeningWatchdog);
         listening=false;
         micBtn.classList.remove('active','listening-pulse');
