@@ -490,6 +490,7 @@
     </div>
     <div class="header-right">
       <button class="reset-btn" id="resetBtn" style="display:none;">重新开始</button>
+      <button class="gear-btn" id="notebookBtn" title="笔记本">📔</button>
       <button class="gear-btn" id="gearBtn" title="设置">⚙️</button>
     </div>
   </div>
@@ -641,20 +642,40 @@
         </div>
       </div>
       <div class="settings-section">
-        <button class="settings-section-header" data-color="#128A5E">
-          <span class="ssh-left"><span class="ssh-dot"></span>生词本（长期保存）</span>
+        <button class="settings-section-header" data-color="#E0433D">
+          <span class="ssh-left"><span class="ssh-dot"></span>数据管理</span>
           <span class="ssh-chev">›</span>
         </button>
         <div class="settings-section-body">
+          <button class="settings-btn danger" id="clearDataBtn">清除本地全部数据（生词本 / 历史 / API 设置）</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="notebookMask">
+  <div class="settings-modal">
+    <div class="settings-header">
+      <h3>📔 笔记本</h3>
+      <button class="settings-close" id="notebookClose">✕</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-section">
+        <button class="settings-section-header open" data-color="#128A5E">
+          <span class="ssh-left"><span class="ssh-dot"></span>生词本（长期保存）</span>
+          <span class="ssh-chev">›</span>
+        </button>
+        <div class="settings-section-body open">
           <div id="vocabListEl"><div class="settings-empty">还没有标记过生词，点单词或点复盘里的"标记不认识"试试。</div></div>
         </div>
       </div>
       <div class="settings-section">
-        <button class="settings-section-header" data-color="#E8935A">
+        <button class="settings-section-header open" data-color="#E8935A">
           <span class="ssh-left"><span class="ssh-dot"></span>常用表达库（长期保存）</span>
           <span class="ssh-chev">›</span>
         </button>
-        <div class="settings-section-body">
+        <div class="settings-section-body open">
           <div class="manual-add-row">
             <input type="text" id="manualChunkInput" placeholder="手动输入一个词组/句子加入表达库…">
             <button class="settings-btn" id="manualChunkAddBtn" style="width:auto; margin-top:0;">➕ 加入</button>
@@ -671,15 +692,6 @@
           <div id="historyListEl"><div class="settings-empty">完成一次"结束并复盘"后，会自动记录在这里。</div></div>
           <button class="settings-btn" id="trendSummaryBtn">📈 生成阶段性总结</button>
           <div id="trendResultEl"></div>
-        </div>
-      </div>
-      <div class="settings-section">
-        <button class="settings-section-header" data-color="#E0433D">
-          <span class="ssh-left"><span class="ssh-dot"></span>数据管理</span>
-          <span class="ssh-chev">›</span>
-        </button>
-        <div class="settings-section-body">
-          <button class="settings-btn danger" id="clearDataBtn">清除本地全部数据（生词本 / 历史 / API 设置）</button>
         </div>
       </div>
     </div>
@@ -724,6 +736,9 @@
   const gearBtn = document.getElementById('gearBtn');
   const settingsMask = document.getElementById('settingsMask');
   const settingsClose = document.getElementById('settingsClose');
+  const notebookBtn = document.getElementById('notebookBtn');
+  const notebookMask = document.getElementById('notebookMask');
+  const notebookClose = document.getElementById('notebookClose');
   const themeSwatches = document.getElementById('themeSwatches');
   const vocabListEl = document.getElementById('vocabListEl');
   const chunkListEl = document.getElementById('chunkListEl');
@@ -737,7 +752,7 @@
   const saveApiBtn = document.getElementById('saveApiBtn');
   const keyWarning = document.getElementById('keyWarning');
 
-  // ---- collapsible settings sections ----
+  // ---- collapsible sections (used in both the Settings and Notebook panels) ----
   document.querySelectorAll('.settings-section-header').forEach(header=>{
     const color = header.dataset.color;
     if(color) header.querySelector('.ssh-dot').style.setProperty('--dot-color', color);
@@ -763,14 +778,21 @@
       apiSectionHeader.classList.add('open');
       apiSectionHeader.nextElementSibling.classList.add('open');
     }
-    renderVocabList();
-    renderChunkList();
-    renderHistoryList();
     settingsMask.classList.add('show');
   }
   gearBtn.addEventListener('click', openSettings);
   settingsClose.addEventListener('click', ()=> settingsMask.classList.remove('show'));
   settingsMask.addEventListener('click', (e)=>{ if(e.target===settingsMask) settingsMask.classList.remove('show'); });
+
+  function openNotebook(){
+    renderVocabList();
+    renderChunkList();
+    renderHistoryList();
+    notebookMask.classList.add('show');
+  }
+  notebookBtn.addEventListener('click', openNotebook);
+  notebookClose.addEventListener('click', ()=> notebookMask.classList.remove('show'));
+  notebookMask.addEventListener('click', (e)=>{ if(e.target===notebookMask) notebookMask.classList.remove('show'); });
 
   saveApiBtn.addEventListener('click', ()=>{
     apiConfig = {
@@ -1498,14 +1520,23 @@
     if(!('speechSynthesis' in window) || !texts.length){ onAllDone && onAllDone(); return; }
     window.speechSynthesis.cancel();
     let i = 0;
+    let done = false;
+    function finish(){
+      if(done) return;
+      done = true;
+      onAllDone && onAllDone();
+    }
     function next(){
-      if(i >= texts.length){ onAllDone && onAllDone(); return; }
+      if(i >= texts.length){ finish(); return; }
       const u = new SpeechSynthesisUtterance(texts[i]);
       u.lang = 'en-US';
       u.rate = levelRate[selectedLevel] || 0.95;
       if(selectedVoice) u.voice = selectedVoice;
-      u.onend = ()=>{ i++; next(); };
-      u.onerror = ()=>{ i++; next(); };
+      let settled = false;
+      function advance(){ if(settled) return; settled = true; clearTimeout(stuckGuard); i++; next(); }
+      const stuckGuard = setTimeout(advance, Math.max(4000, texts[i].length * 120));
+      u.onend = advance;
+      u.onerror = advance;
       window.speechSynthesis.speak(u);
     }
     next();
@@ -1586,19 +1617,18 @@
   let voiceSessionActive = false;
   let lastConfidence = null;
   let recBusy = false; // guards against overlapping start() calls, which throw InvalidStateError on some browsers
+  let silenceTimer = null;
+  const SILENCE_MS = 1800; // how long to wait after the user stops talking before we finalize the utterance
   try{
     if(SR){
       micBtn.style.display='flex';
       rec = new SR(); rec.lang='en-US'; rec.interimResults=true;
-      // Auto-restart-on-pause (continuous mode / restart-on-silence) turned out to be unreliable
-      // across mobile Safari versions - it could leave the recognizer in a stuck "busy" state that
-      // then made every subsequent start() throw, showing "麦克风启动失败" repeatedly. We now always
-      // treat a stop (silence or manual) as final, which is far more robust even though it means a
-      // long pause mid-sentence will end that turn instead of seamlessly continuing.
-      rec.continuous = false;
+      rec.continuous = true; // lets a natural short pause not immediately end recognition;
+      // we decide when the person is actually "done" ourselves via the silence timer below,
+      // instead of relying on each browser's own (very inconsistent) built-in cutoff.
       micBtn.addEventListener('click', ()=>{
         try{
-          if(listening){ manualStop = true; voiceSessionActive = false; rec.stop(); return; }
+          if(listening){ finalizeListening(); return; }
           startListening();
         }catch(e){ console.error('ChatCoach mic click error:', e); showMicBanner('麦克风出了点问题，再试一次？'); }
       });
@@ -1613,26 +1643,47 @@
         userInput.value = (accumulatedTranscript + ' ' + interimChunk).trim();
         autoResize();
         lastInputWasVoice = true;
+        // any new speech (even interim) means the person is still talking - push the silence deadline out
+        clearTimeout(silenceTimer);
+        clearTimeout(listeningWatchdog);
+        listeningWatchdog = setTimeout(watchdogFire, 20000);
+        if(voiceSessionActive){
+          silenceTimer = setTimeout(()=>{ if(listening) finalizeListening(); }, SILENCE_MS);
+        }
       };
       rec.onend = ()=>{
         clearTimeout(listeningWatchdog);
+        clearTimeout(silenceTimer);
         listening=false;
         recBusy = false;
-        voiceSessionActive = false;
         micBtn.classList.remove('active','listening-pulse');
+        if(!manualStop && voiceSessionActive){
+          // the browser cut the session off on its own (varies a lot by device) - resume seamlessly
+          // after a short delay, since starting again immediately is what tends to throw on iOS
+          setTimeout(()=>{ if(voiceSessionActive && !manualStop) safeStart(); }, 250);
+          return;
+        }
+        voiceSessionActive = false;
         userInput.dataset.clarity = lastConfidence!=null ? lastConfidence : '';
         if(userInput.value.trim() && autoSendOn){ sendMessage(lastConfidence); }
       };
       rec.onerror = (e)=>{
         clearTimeout(listeningWatchdog);
+        clearTimeout(silenceTimer);
         listening=false; recBusy = false; micBtn.classList.remove('active','listening-pulse');
+        const errType = e && e.error;
+        // "aborted" fires routinely when we intentionally stop/restart the recognizer - not a real problem,
+        // and "no-speech" during voice mode just means a longer natural pause - neither should alarm the user.
+        if(errType === 'aborted'){ return; }
+        if(errType === 'no-speech'){
+          if(voiceSessionActive && !manualStop){ setTimeout(()=>{ if(voiceSessionActive && !manualStop) safeStart(); }, 250); }
+          return;
+        }
         let msg = '麦克风识别出了点问题，再试一次？';
-        let hardStop = true;
-        if(e && e.error === 'not-allowed') msg = '麦克风权限被拒绝了 —— 请检查浏览器/系统的麦克风权限设置并允许访问。';
-        else if(e && e.error === 'no-speech'){ msg = '没有听到声音，再点一次麦克风试试？'; hardStop = true; }
-        else if(e && e.error === 'network') msg = '语音识别网络异常，请重试。';
-        if(hardStop){ manualStop = true; voiceSessionActive = false; }
-        if(msg) showMicBanner(msg);
+        if(errType === 'not-allowed') msg = '麦克风权限被拒绝了 —— 请检查浏览器/系统的麦克风权限设置并允许访问。';
+        else if(errType === 'network') msg = '语音识别网络异常，请重试。';
+        manualStop = true; voiceSessionActive = false;
+        showMicBanner(msg);
       };
     } else {
       voiceToggle.disabled = true;
@@ -1647,6 +1698,27 @@
     micBtn.style.display = 'none';
   }
   let listeningWatchdog = null;
+  function watchdogFire(){
+    if(listening){
+      manualStop = true; voiceSessionActive = false; listening = false; recBusy = false;
+      micBtn.classList.remove('active','listening-pulse');
+      try{ rec.stop(); }catch(e){}
+      showMicBanner('识别超时自动停止了，可以再点一次麦克风重新开始。');
+    }
+  }
+  // finalize the current utterance right now (silence timer elapsed, or user tapped mic to stop manually)
+  function finalizeListening(){
+    manualStop = true; voiceSessionActive = false;
+    clearTimeout(silenceTimer); clearTimeout(listeningWatchdog);
+    try{ rec.stop(); }catch(e){}
+  }
+  // start() guarded against the InvalidStateError some browsers throw if called while already busy
+  function safeStart(){
+    if(!rec || recBusy) return;
+    recBusy = true;
+    try{ rec.start(); listening=true; micBtn.classList.add('active','listening-pulse'); }
+    catch(e){ recBusy = false; }
+  }
   function startListening(){
     if(!rec || recBusy) return;
     manualStop = false;
@@ -1659,14 +1731,7 @@
     try{ rec.start(); listening=true; micBtn.classList.add('active','listening-pulse'); }
     catch(e){ recBusy = false; showMicBanner('麦克风启动失败，请等一两秒再试一次。'); return; }
     clearTimeout(listeningWatchdog);
-    listeningWatchdog = setTimeout(()=>{
-      if(listening){
-        manualStop = true; voiceSessionActive = false; listening = false; recBusy = false;
-        micBtn.classList.remove('active','listening-pulse');
-        try{ rec.stop(); }catch(e){}
-        showMicBanner('识别超时自动停止了，可以再点一次麦克风重新开始。');
-      }
-    }, 20000);
+    listeningWatchdog = setTimeout(watchdogFire, 20000);
   }
   function updateVoiceToggle(){
     voiceToggle.textContent = voiceModeOn ? '🎧 语音对话模式：开' : '🎧 语音对话模式：关';
@@ -1681,6 +1746,7 @@
       else {
         manualStop=true; voiceSessionActive=false; recBusy=false;
         clearTimeout(listeningWatchdog);
+        clearTimeout(silenceTimer);
         listening=false;
         micBtn.classList.remove('active','listening-pulse');
         try{ rec.stop(); }catch(e){}
@@ -1765,7 +1831,7 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly t
       let parsed = null;
       let lastCleanText = '';
       for(let attempt=0; attempt<2 && !parsed; attempt++){
-        const data = await callClaudeAPI({ model: apiConfig.model, max_tokens: 1500, system: systemPrompt, messages: apiMessages });
+        const data = await callClaudeAPI({ model: apiConfig.model, max_tokens: 2200, system: systemPrompt, messages: apiMessages });
         const textOut = (data.content||[]).map(b=>b.text||'').join('');
         const clean = textOut.replace(/```json|```/g,'').trim();
         lastCleanText = clean;
@@ -1793,7 +1859,7 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly t
       if(parsed.reply) toSpeak.push(parsed.reply);
       if(parsed.native_version) toSpeak.push(`Here's a more natural way to say it: ${parsed.native_version}`);
       if(voiceModeOn || autoSpeakOn){
-        speakQueue(toSpeak, ()=>{ if(voiceModeOn) startListening(); });
+        speakQueue(toSpeak, ()=>{ if(voiceModeOn) setTimeout(()=>{ if(voiceModeOn) startListening(); }, 450); });
       }
 
     }catch(err){
