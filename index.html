@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM1QjhERUYiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjM0E2M0Q4Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KCiAgPCEtLSBiYWNrZ3JvdW5kIC0tPgogIDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTEyIiBmaWxsPSJ1cmwoI2JnKSIvPgoKICA8IS0tIHNwZWVjaCBidWJibGUgLS0+CiAgPHBhdGggZD0iTTExMiAxNjhjMC0zMC45IDI1LjEtNTYgNTYtNTZoMTc2YzMwLjkgMCA1NiAyNS4xIDU2IDU2djEwNGMwIDMwLjktMjUuMSA1Ni01NiA1NkgyNDRsLTU2IDQ4di00OGgtMjBjLTMwLjkgMC01Ni0yNS4xLTU2LTU2VjE2OHoiCiAgICAgICAgZmlsbD0iI0ZGRkZGRiIvPgoKICA8IS0tIHNvdW5kd2F2ZSAvIHZvaWNlIGJhcnMgaW5zaWRlIHRoZSBidWJibGUgLS0+CiAgPGcgZmlsbD0iIzNBNjNEOCI+CiAgICA8cmVjdCB4PSIxNjQiIHk9IjE4OCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjY0IiByeD0iOSIvPgogICAgPHJlY3QgeD0iMjAwIiB5PSIxNjQiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxMTIiIHJ4PSI5Ii8+CiAgICA8cmVjdCB4PSIyMzYiIHk9IjE0OCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE0NCIgcng9IjkiLz4KICAgIDxyZWN0IHg9IjI3MiIgeT0iMTY0IiB3aWR0aD0iMTgiIGhlaWdodD0iMTEyIiByeD0iOSIvPgogICAgPHJlY3QgeD0iMzA4IiB5PSIxODgiIHdpZHRoPSIxOCIgaGVpZ2h0PSI2NCIgcng9IjkiLz4KICA8L2c+CgogIDwhLS0gc21hbGwgc3BhcmtsZSBhY2NlbnQgLS0+CiAgPHBhdGggZD0iTTM4NCAzMjBsOC41IDE5LjVMNDEyIDM0OGwtMTkuNSA4LjVMMzg0IDM3NmwtOC41LTE5LjVMMzU2IDM0OGwxOS41LTguNXoiIGZpbGw9IiNGRkQxNjYiLz4KPC9zdmc+Cg==">
 <title>ChatCoach · 英语对练（本地版）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet">
@@ -252,6 +253,12 @@
   }
   .native-version b{color:var(--text); font-weight:600; font-family:'Noto Sans SC',sans-serif;}
   .native-version .nv-text{color:var(--text); font-weight:600; margin-top:3px;}
+  .chunk-add-btn{
+    margin-top:6px; border:1px solid var(--border); background:none; border-radius:8px; padding:4px 9px;
+    font-size:11px; cursor:pointer; color:var(--text-dim); font-family:'Inter',sans-serif;
+  }
+  .chunk-add-btn:hover{border-color:var(--accent); color:var(--accent-strong);}
+  .chunk-add-btn:disabled{opacity:0.6; cursor:default;}
   .praise-card{
     max-width:82%; margin-top:6px; padding:8px 13px; border-radius:var(--radius-md);
     background:var(--praise-dim); border-left:3px solid var(--praise); font-size:13px; color:var(--praise); font-weight:600;
@@ -319,6 +326,12 @@
   }
   .word-popover.show{display:block;}
   .word-popover .wp-speak{background:none; border:none; cursor:pointer; font-size:13px; padding:0 0 0 4px; vertical-align:middle;}
+  .word-popover .wp-close{
+    position:absolute; top:8px; right:8px; width:22px; height:22px; border-radius:50%;
+    border:none; background:var(--bg-panel-2); color:var(--text-dim); cursor:pointer; font-size:12px;
+    line-height:1; display:flex; align-items:center; justify-content:center; padding:0;
+  }
+  .word-popover .wp-close:hover{color:var(--text);}
   @media (max-width: 640px){
     .word-popover{
       position:fixed !important; left:12px !important; right:12px; top:auto !important; bottom:12px !important;
@@ -366,6 +379,15 @@
   .cat-card .examples .arrow{margin:0 4px; color:var(--correct);}
   .cat-card .cause,.cat-card .advice{font-size:12.5px; color:var(--text-dim); line-height:1.5; margin-top:4px;}
   .cat-card .cause b,.cat-card .advice b{color:var(--text); font-weight:600;}
+  .rule-toggle{
+    display:block; margin-top:6px; background:none; border:none; color:var(--accent-strong); cursor:pointer;
+    font-size:12px; padding:0; font-family:'Noto Sans SC',sans-serif;
+  }
+  .rule-body{
+    display:none; margin-top:6px; padding:9px 11px; background:var(--bg-panel-2); border-radius:8px;
+    font-size:12.5px; color:var(--text); line-height:1.6; white-space:pre-wrap;
+  }
+  .rule-body.show{display:block;}
   .level-suggest{
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     background:var(--praise-dim); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:14px;
@@ -384,20 +406,27 @@
   .export-btn:hover{border-color:var(--accent); color:var(--accent-strong);}
   .review-loading{padding:40px 20px; text-align:center; color:var(--text-dim); font-size:13px;}
 
-  /* ---------- SETTINGS MODAL ---------- */
+  /* ---------- SETTINGS MODAL (fullscreen, not a small card - easier to read/scroll on any device) ---------- */
   .modal-mask{
-    display:none; position:fixed; inset:0; background:rgba(20,22,43,0.45);
-    align-items:center; justify-content:center; z-index:200; padding:16px;
+    display:none; position:fixed; inset:0; background:var(--bg-app, var(--bg-panel));
+    align-items:stretch; justify-content:stretch; z-index:200; padding:0;
   }
   .modal-mask.show{display:flex;}
   .settings-modal{
-    background:var(--bg-panel); border:1px solid var(--border); border-radius:18px;
-    width:100%; max-width:440px; max-height:80vh; display:flex; flex-direction:column; color:var(--text);
+    background:var(--bg-panel); border:none; border-radius:0;
+    width:100%; max-width:none; height:100vh; max-height:none; display:flex; flex-direction:column; color:var(--text);
   }
-  .settings-header{padding:16px 18px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;}
-  .settings-header h3{margin:0; font-family:'Space Grotesk',sans-serif; font-size:16px;}
-  .settings-close{background:none; border:none; color:var(--text-dim); font-size:18px; cursor:pointer;}
-  .settings-body{padding:16px 18px; overflow-y:auto;}
+  .settings-header{
+    padding:16px 18px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;
+    flex-shrink:0; position:sticky; top:0; background:var(--bg-panel); z-index:2;
+  }
+  .settings-header h3{margin:0; font-family:'Space Grotesk',sans-serif; font-size:17px;}
+  .settings-close{
+    background:var(--bg-panel-2); border:1px solid var(--border); color:var(--text-dim); font-size:13px; cursor:pointer;
+    padding:7px 14px; border-radius:20px; display:flex; align-items:center; gap:5px; font-family:'Inter',sans-serif;
+  }
+  .settings-close:hover{border-color:var(--accent); color:var(--accent-strong);}
+  .settings-body{padding:16px 18px 32px; overflow-y:auto; max-width:640px; margin:0 auto; width:100%;}
   .settings-section{margin-bottom:10px; border:1px solid var(--border); border-radius:12px; overflow:hidden;}
   .settings-section:last-child{margin-bottom:0;}
   .settings-section-title{font-family:'Space Grotesk',sans-serif; font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); margin:0 0 10px;}
@@ -453,8 +482,13 @@
   .settings-btn:hover{border-color:var(--accent); color:var(--accent-strong);}
   .settings-btn.danger:hover{border-color:var(--correct); color:var(--correct);}
   .history-item{border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; font-size:12.5px;}
+  .history-item:hover{border-color:var(--accent);}
   .history-item .h-top{display:flex; justify-content:space-between; font-weight:600; margin-bottom:3px;}
   .history-item .h-meta{color:var(--text-dim);}
+  .history-transcript{border:1px solid var(--border); border-radius:12px; padding:12px 14px; font-size:13px; line-height:1.6;}
+  .history-transcript .ht-row{margin-bottom:8px;}
+  .history-transcript .ht-user b{color:var(--accent-strong);}
+  .history-transcript .ht-ai b{color:var(--text-dim);}
 
   /* ---------- responsive / mobile ---------- */
   @media (max-width: 640px){
@@ -471,7 +505,6 @@
     .voice-row{padding:6px 12px 8px;}
     .voice-select{max-width:150px;}
     .voice-toggle{font-size:11px; padding:5px 9px;}
-    .settings-modal{max-height:88vh;}
     .review-body{padding:14px;}
   }
   @media (max-width: 380px){
@@ -634,7 +667,7 @@
   <div class="settings-modal">
     <div class="settings-header">
       <h3>设置</h3>
-      <button class="settings-close" id="settingsClose">✕</button>
+      <button class="settings-close" id="settingsClose">← 返回主界面</button>
     </div>
     <div class="settings-body">
       <div class="settings-section">
@@ -676,7 +709,13 @@
           <span class="ssh-chev">›</span>
         </button>
         <div class="settings-section-body">
-          <button class="settings-btn danger" id="clearDataBtn">清除本地全部数据（生词本 / 历史 / API 设置）</button>
+          <p class="settings-note" style="margin-top:0;">每一项都可以单独清除。清除前会自动做一次备份，误删了可以在下面恢复（备份只保留最近一次，且只在这台设备的浏览器里，关闭页面前记得先导出重要内容）。</p>
+          <button class="settings-btn danger" id="clearVocabBtn">清除生词本</button>
+          <button class="settings-btn danger" id="clearChunksBtn">清除常用表达库</button>
+          <button class="settings-btn danger" id="clearHistoryBtn">清除历史回顾</button>
+          <button class="settings-btn danger" id="clearApiBtn">清除 API 设置</button>
+          <button class="settings-btn danger" id="clearAllBtn">清除以上全部</button>
+          <button class="settings-btn" id="undoClearBtn" style="display:none;margin-top:10px;">↩️ 恢复上一次清除的数据</button>
         </div>
       </div>
     </div>
@@ -687,7 +726,7 @@
   <div class="settings-modal">
     <div class="settings-header">
       <h3>📔 笔记本</h3>
-      <button class="settings-close" id="notebookClose">✕</button>
+      <button class="settings-close" id="notebookClose">← 返回主界面</button>
     </div>
     <div class="settings-body">
       <div class="settings-section">
@@ -727,6 +766,16 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="historyDetailMask">
+  <div class="settings-modal">
+    <div class="settings-header">
+      <h3 id="historyDetailTitle">对练回顾</h3>
+      <button class="settings-close" id="historyDetailClose">← 返回主界面</button>
+    </div>
+    <div class="settings-body" id="historyDetailBody"></div>
   </div>
 </div>
 
@@ -777,7 +826,6 @@
   const historyListEl = document.getElementById('historyListEl');
   const trendSummaryBtn = document.getElementById('trendSummaryBtn');
   const trendResultEl = document.getElementById('trendResultEl');
-  const clearDataBtn = document.getElementById('clearDataBtn');
   const baseUrlInput = document.getElementById('baseUrlInput');
   const modelInput = document.getElementById('modelInput');
   const apiKeyInput = document.getElementById('apiKeyInput');
@@ -861,16 +909,53 @@
     });
   });
 
-  clearDataBtn.addEventListener('click', ()=>{
-    if(!confirm('确定要清除生词本、表达库、学习路径进度、历史记录和 API 设置吗？此操作无法撤销。')) return;
-    localStorage.removeItem(LS_CONFIG);
-    localStorage.removeItem(LS_VOCAB);
-    localStorage.removeItem(LS_CHUNKS);
-    localStorage.removeItem(LS_PATH_PROGRESS);
-    localStorage.removeItem(LS_HISTORY);
-    localStorage.removeItem(LS_THEME);
-    location.reload();
+  // ================= DATA MANAGEMENT (granular clear + one-step-back undo) =================
+  const LS_CLEAR_BACKUP = 'chatcoach_clear_backup';
+  const clearVocabBtn = document.getElementById('clearVocabBtn');
+  const clearChunksBtn = document.getElementById('clearChunksBtn');
+  const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+  const clearApiBtn = document.getElementById('clearApiBtn');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  const undoClearBtn = document.getElementById('undoClearBtn');
+  function updateUndoBtnVisibility(){
+    undoClearBtn.style.display = localStorage.getItem(LS_CLEAR_BACKUP) ? 'block' : 'none';
+  }
+  function backupAndClear(keysToClear, confirmMsg){
+    if(!confirm(confirmMsg)) return false;
+    const backup = {};
+    keysToClear.forEach(k => { backup[k] = localStorage.getItem(k); });
+    localStorage.setItem(LS_CLEAR_BACKUP, JSON.stringify({data: backup, savedAt: Date.now()}));
+    keysToClear.forEach(k => localStorage.removeItem(k));
+    return true;
+  }
+  clearVocabBtn.addEventListener('click', ()=>{
+    if(backupAndClear([LS_VOCAB], '确定要清除生词本吗？清除前会自动备份，可以在下面恢复。')) location.reload();
   });
+  clearChunksBtn.addEventListener('click', ()=>{
+    if(backupAndClear([LS_CHUNKS], '确定要清除常用表达库吗？清除前会自动备份，可以在下面恢复。')) location.reload();
+  });
+  clearHistoryBtn.addEventListener('click', ()=>{
+    if(backupAndClear([LS_HISTORY], '确定要清除历史回顾吗？清除前会自动备份，可以在下面恢复。')) location.reload();
+  });
+  clearApiBtn.addEventListener('click', ()=>{
+    if(backupAndClear([LS_CONFIG], '确定要清除 API 设置吗？清除前会自动备份，可以在下面恢复。')) location.reload();
+  });
+  clearAllBtn.addEventListener('click', ()=>{
+    if(backupAndClear([LS_CONFIG, LS_VOCAB, LS_CHUNKS, LS_PATH_PROGRESS, LS_HISTORY, LS_THEME], '确定要清除生词本、表达库、学习路径进度、历史记录和 API 设置吗？清除前会自动备份，可以在下面恢复。')) location.reload();
+  });
+  undoClearBtn.addEventListener('click', ()=>{
+    const raw = localStorage.getItem(LS_CLEAR_BACKUP);
+    if(!raw) return;
+    try{
+      const backup = JSON.parse(raw);
+      Object.keys(backup.data).forEach(k=>{
+        if(backup.data[k] !== null && backup.data[k] !== undefined) localStorage.setItem(k, backup.data[k]);
+      });
+      localStorage.removeItem(LS_CLEAR_BACKUP);
+      location.reload();
+    }catch(e){ alert('恢复失败了，备份数据可能已损坏。'); }
+  });
+  updateUndoBtnVisibility();
 
   // ================= VOCAB NOTEBOOK (persisted) =================
   let vocabList = loadJSON(LS_VOCAB, []);
@@ -1061,8 +1146,63 @@
     downloadText('我的常用表达库.md', md);
   });
 
+  const historyDetailMask = document.getElementById('historyDetailMask');
+  const historyDetailTitle = document.getElementById('historyDetailTitle');
+  const historyDetailBody = document.getElementById('historyDetailBody');
+  const historyDetailClose = document.getElementById('historyDetailClose');
+  historyDetailClose.addEventListener('click', ()=> historyDetailMask.classList.remove('show'));
+  historyDetailMask.addEventListener('click', (e)=>{ if(e.target===historyDetailMask) historyDetailMask.classList.remove('show'); });
+  function showHistoryDetail(h){
+    historyDetailTitle.textContent = `${h.scenarioCn} · ${h.date}`;
+    if(!h.transcript && !h.reviewData){
+      historyDetailBody.innerHTML = '<div class="settings-empty">这条记录是旧版本生成的，没有保存完整对话内容，之后新的记录会包含完整回顾。</div>';
+      historyDetailMask.classList.add('show');
+      return;
+    }
+    let out = `<div class="review-stats">
+      <div class="stat-chip"><div class="num">${h.turnCount}</div><div class="lbl">对话轮数</div></div>
+      <div class="stat-chip"><div class="num">${h.correctionsCount}</div><div class="lbl">被纠正次数</div></div>
+      <div class="stat-chip"><div class="num">${h.reviewData && h.reviewData.categories ? h.reviewData.categories.length : 0}</div><div class="lbl">错误类型</div></div>
+    </div>`;
+    if(h.reviewData){
+      const d = h.reviewData;
+      if(d.strengths) out += `<div class="review-hero"><h3>👍 做得好的地方</h3><p>${escapeHtml(d.strengths)}</p></div>`;
+      (d.categories||[]).forEach((cat,ci)=>{
+        let examplesHtml = (cat.examples||[]).map(ex=>
+          `<div><span class="orig">${escapeHtml(ex.original)}</span><span class="arrow">→</span><span>${escapeHtml(ex.suggestion)}</span></div>`
+        ).join('');
+        out += `<div class="cat-card">
+          <div class="cat-title"><span>${escapeHtml(cat.name)}</span><span class="count">${cat.count} 处</span></div>
+          <div class="examples">${examplesHtml}</div>
+          <div class="cause"><b>原因：</b>${escapeHtml(cat.cause||'')}</div>
+          ${cat.rule ? `<button class="rule-toggle" data-idx="hist${ci}">📚 展开知识点讲解 ›</button><div class="rule-body" id="ruleBodyhist${ci}">${escapeHtml(cat.rule)}</div>` : ''}
+          <div class="advice"><b>建议：</b>${escapeHtml(cat.advice||'')}</div>
+        </div>`;
+      });
+      if(d.overall) out += `<div class="review-hero"><h3>📌 总结</h3><p>${escapeHtml(d.overall)}</p></div>`;
+    }
+    if(h.transcript && h.transcript.length){
+      out += `<div class="settings-section-title" style="margin-top:16px;">完整对话记录</div>`;
+      out += '<div class="history-transcript">';
+      h.transcript.forEach(t=>{
+        if(t.content === '(begin the scene)') return;
+        out += `<div class="ht-row ${t.role==='user'?'ht-user':'ht-ai'}"><b>${t.role==='user'?'我':'AI'}：</b>${escapeHtml(t.content)}</div>`;
+      });
+      out += '</div>';
+    }
+    historyDetailBody.innerHTML = out;
+    historyDetailBody.querySelectorAll('.rule-toggle').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const body = document.getElementById('ruleBody' + btn.dataset.idx);
+        const isOpen = body.classList.toggle('show');
+        btn.textContent = isOpen ? '📚 收起知识点讲解 ‹' : '📚 展开知识点讲解 ›';
+      });
+    });
+    historyDetailMask.classList.add('show');
+  }
+
   // ================= HISTORY LOG (persisted) =================
-  let historyList = loadJSON(LS_HISTORY, []); // {date, scenarioCn, level, turnCount, correctionsCount, overall}
+  let historyList = loadJSON(LS_HISTORY, []); // {date, scenarioCn, level, turnCount, correctionsCount, overall, transcript, reviewData}
   function addHistoryEntry(entry){
     historyList.push(entry);
     if(historyList.length > 50) historyList = historyList.slice(-50);
@@ -1077,7 +1217,10 @@
     historyList.slice().reverse().forEach(h=>{
       const item = document.createElement('div');
       item.className = 'history-item';
-      item.innerHTML = `<div class="h-top"><span>${escapeHtml(h.scenarioCn)} · ${escapeHtml(levelLabel[h.level]||h.level)}</span><span class="h-meta">${escapeHtml(h.date)}</span></div><div class="h-meta">${h.turnCount} 轮对话 · ${h.correctionsCount} 处纠正</div>`;
+      item.style.cursor = 'pointer';
+      item.title = '点击查看这天的完整对话和复盘';
+      item.innerHTML = `<div class="h-top"><span>${escapeHtml(h.scenarioCn)} · ${escapeHtml(levelLabel[h.level]||h.level)}</span><span class="h-meta">${escapeHtml(h.date)}</span></div><div class="h-meta">${h.turnCount} 轮对话 · ${h.correctionsCount} 处纠正 ›</div>`;
+      item.addEventListener('click', ()=> showHistoryDetail(h));
       historyListEl.appendChild(item);
     });
   }
@@ -1382,7 +1525,7 @@
     userInput.style.height = 'auto';
     userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
   }
-  userInput.addEventListener('input', ()=>{ autoResize(); lastInputWasVoice = false; });
+  userInput.addEventListener('input', ()=>{ autoResize(); lastInputWasVoice = false; if(listening) userEditedTranscript = true; });
   userInput.addEventListener('keydown', e=>{
     if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
   });
@@ -1440,6 +1583,25 @@
     });
   }
 
+  // Lets the learner opt in to saving a specific useful line (an AI question/phrasing, or a
+  // native-speaker rewrite) into the long-term expression library, instead of everything being
+  // auto-saved regardless of whether it was actually useful.
+  async function quickAddChunk(phrase, btn){
+    if(!phrase) return;
+    btn.disabled = true;
+    btn.textContent = '添加中…';
+    let zh = '';
+    try{
+      const data = await callClaudeAPI({
+        model: apiConfig.model, max_tokens: 100,
+        messages: [{role:'user', content: `Give a concise natural Chinese translation (under 15 characters if possible) of this English phrase/sentence. Respond with ONLY the Chinese, nothing else:\n"${phrase}"`}]
+      }, 2);
+      zh = (data.content||[]).map(b=>b.text||'').join('').trim();
+    }catch(e){ /* still add it even if the translation lookup failed */ }
+    addToChunks(phrase, selectedScenario ? selectedScenario.cn : '', zh);
+    btn.textContent = '✓ 已加入表达库';
+  }
+
   function addAiBubble(text){
     const row = document.createElement('div');
     row.className = 'msg-row ai';
@@ -1472,6 +1634,13 @@
       });
     });
     tools.appendChild(speakBtn);
+
+    const chunkBtn = document.createElement('button');
+    chunkBtn.className = 'speaker-btn';
+    chunkBtn.textContent = '➕ 收藏';
+    chunkBtn.title = '把这句加入常用表达库';
+    chunkBtn.addEventListener('click', ()=> quickAddChunk(text, chunkBtn));
+    tools.appendChild(chunkBtn);
 
     const translateBtn = document.createElement('button');
     translateBtn.className = 'translate-btn';
@@ -1524,22 +1693,62 @@
     wordPopover.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
     wordPopover.style.top = (rect.bottom + 6) + 'px';
     wordPopover.classList.add('show');
-    wordPopover.innerHTML = `<div class="wp-word">${escapeHtml(word)}</div><div class="wp-loading">查询中…</div>`;
+    wordPopover.innerHTML = `<button class="wp-close">✕</button><div class="wp-word">${escapeHtml(word)}</div><div class="wp-loading">查询中…</div>`;
+    wordPopover.querySelector('.wp-close').addEventListener('click', (ev)=>{ ev.stopPropagation(); wordPopover.classList.remove('show'); });
 
     const cacheKey = word.toLowerCase() + '|' + sentence;
     let def = wordDefCache.get(cacheKey);
     if(!def){
-      try{
-        const data = await callClaudeAPI({
-          model: apiConfig.model, max_tokens: 450,
-          messages: [{role:'user', content: `Define the English word or phrase "${word}" as it's used in this sentence: "${sentence}". Respond ONLY with JSON, no markdown fences, no double quotes inside string values (use single quotes if needed): {"en":"one simple English definition, max 15 words","zh":"concise Chinese meaning, max 12 characters","ipa":"IPA phonetic transcription, e.g. /ɪɡˈzæmpəl/","collocations":["2-3 common short collocations or phrases using this word"],"collocations_zh":["matching Chinese meaning for each collocation above, same order"],"example":"one new natural example sentence using the word, different from the given sentence","example_zh":"Chinese translation of that example sentence","category":"one word Chinese topic category this word belongs to, e.g. 食物/旅行/住宿/工作/社交/情绪/其他"}`}]
-        }, 2);
-        const raw = (data.content||[]).map(b=>b.text||'').join('');
-        def = JSON.parse(extractJson(raw));
-        wordDefCache.set(cacheKey, def);
-      }catch(err){
-        def = {en:'查询失败，再点一次试试', zh:'', ipa:'', collocations:[], collocations_zh:[], example:'', example_zh:'', category:'其他'};
+      def = null;
+      for(let attempt=0; attempt<2 && !def; attempt++){
+        try{
+          const data = await callClaudeAPI({
+            model: apiConfig.model, max_tokens: 350,
+            messages: [{role:'user', content: `Define the English word or phrase "${word}" as it's used in this sentence: "${sentence}".
+Respond in EXACTLY this plain-text format, literal markers on their own lines, no JSON, no markdown fences. Leave a section empty (just the two marker lines) if not applicable.
+<<<EN>>>
+(one simple English definition, max 15 words)
+<<<END>>>
+<<<ZH>>>
+(concise Chinese meaning, max 12 characters)
+<<<END>>>
+<<<IPA>>>
+(IPA phonetic transcription, e.g. /ɪɡˈzæmpəl/, or leave empty)
+<<<END>>>
+<<<CATEGORY>>>
+(one Chinese word topic category, e.g. 食物/旅行/住宿/工作/社交/情绪/其他)
+<<<END>>>
+<<<COLLOCATIONS>>>
+(2-3 lines, each: English collocation -> Chinese meaning, or leave empty)
+apply for a job -> 申请工作
+<<<END>>>
+<<<EXAMPLE>>>
+(one new natural English example sentence using the word, different from the given sentence)
+<<<END>>>
+<<<EXAMPLE_ZH>>>
+(Chinese translation of that example sentence)
+<<<END>>>` }]
+          }, 2);
+          const raw = (data.content||[]).map(b=>b.text||'').join('').trim();
+          const en = extractTag(raw, 'EN');
+          if(en){
+            const collocLines = extractTag(raw, 'COLLOCATIONS').split('\n').map(l=>l.trim()).filter(Boolean);
+            const collocations = [], collocations_zh = [];
+            collocLines.forEach(line=>{
+              const parts = line.split('->');
+              if(parts.length>=2){ collocations.push(parts[0].trim()); collocations_zh.push(parts.slice(1).join('->').trim()); }
+            });
+            def = {
+              en, zh: extractTag(raw, 'ZH'), ipa: extractTag(raw, 'IPA'),
+              category: extractTag(raw, 'CATEGORY') || '其他',
+              collocations, collocations_zh,
+              example: extractTag(raw, 'EXAMPLE'), example_zh: extractTag(raw, 'EXAMPLE_ZH')
+            };
+          }
+        }catch(err){ /* retry */ }
       }
+      if(!def) def = {en:'查询失败，再点一次试试', zh:'', ipa:'', collocations:[], collocations_zh:[], example:'', example_zh:'', category:'其他'};
+      else wordDefCache.set(cacheKey, def);
     }
     if(myToken !== currentPopoverToken) return; // a newer click superseded this one
     const colloc = (def.collocations||[]).length ? `<div class="wp-colloc"><b>常见搭配：</b>${def.collocations.map(escapeHtml).join('　')}</div>` : '';
@@ -1547,6 +1756,7 @@
     const collocZhLine = (def.collocations_zh||[]).length ? `<div style="margin-top:4px;">${def.collocations.map((c,i)=>`${escapeHtml(c)}：${escapeHtml(def.collocations_zh[i]||'')}`).join('；')}</div>` : '';
     const exampleZhLine = def.example_zh ? `<div style="margin-top:4px;">${escapeHtml(def.example_zh)}</div>` : '';
     wordPopover.innerHTML = `
+      <button class="wp-close">✕</button>
       <div class="wp-word">${escapeHtml(word)}${def.ipa?` <span class="wp-ipa">${escapeHtml(def.ipa)}</span>`:''} <button class="wp-speak">🔊</button></div>
       <div class="wp-en">${escapeHtml(def.en||'')}</div>
       ${colloc}
@@ -1557,6 +1767,7 @@
         <button class="wp-mark">🔖 加入生词本</button>
       </div>
     `;
+    wordPopover.querySelector('.wp-close').addEventListener('click', (ev)=>{ ev.stopPropagation(); wordPopover.classList.remove('show'); });
     wordPopover.querySelector('.wp-speak').addEventListener('click', (ev)=>{
       ev.stopPropagation();
       speakQueue([word], ()=>{});
@@ -1625,6 +1836,11 @@
         nvText.className = 'nv-text';
         renderWordTokens(nvText, nativeVersion);
         nv.appendChild(label); nv.appendChild(nvText);
+        const addBtn = document.createElement('button');
+        addBtn.className = 'chunk-add-btn';
+        addBtn.textContent = '➕ 收藏这句到表达库';
+        addBtn.addEventListener('click', ()=> quickAddChunk(nativeVersion, addBtn));
+        nv.appendChild(addBtn);
         body.appendChild(nv);
       }
 
@@ -1682,27 +1898,68 @@
 
   function scrollDown(){ msgsWrap.scrollTop = msgsWrap.scrollHeight; }
   function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function extractJson(text){
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
-    if(start===-1 || end===-1 || end<start) throw new Error('no json found in response');
-    return text.slice(start, end+1);
+
+  // ================= TAG-DELIMITED RESPONSE PARSING =================
+  // Everything the AI needs to return in a structured way (conversation turns, word definitions,
+  // review summaries) uses this simple <<<TAG>>>...<<<END>>> format instead of JSON. Free text never
+  // needs escaping here (quotes, apostrophes, line breaks are all fine as-is), which is what made the
+  // old JSON.parse-based approach fail unpredictably as replies got longer or more natural. A missing
+  // or malformed tag degrades gracefully (empty string) instead of throwing and killing the whole turn.
+  function extractTag(text, tag){
+    const startTag = `<<<${tag}>>>`;
+    const i = text.indexOf(startTag);
+    if(i === -1) return '';
+    const from = i + startTag.length;
+    const j = text.indexOf('<<<END>>>', from);
+    return (j === -1 ? text.slice(from) : text.slice(from, j)).trim();
   }
-  function extractField(text, field){
-    const m = text.match(new RegExp('"' + field + '"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"'));
-    if(!m) return null;
-    try{ return JSON.parse('"' + m[1] + '"'); }catch(e){ return m[1]; }
+  function parseCorrections(block){
+    if(!block) return [];
+    const items = [];
+    const re = /ORIGINAL:\s*([\s\S]*?)\s*SUGGESTION:\s*([\s\S]*?)\s*NOTE:\s*([\s\S]*?)(?=(?:\n?\s*\d+[\).]\s*ORIGINAL:)|$)/g;
+    let m;
+    while((m = re.exec(block))){
+      const original = m[1].trim(), suggestion = m[2].trim(), note = m[3].trim();
+      if(original || suggestion) items.push({original, suggestion, note});
+    }
+    return items;
+  }
+  function parseCategories(block){
+    if(!block) return [];
+    const chunks = block.split(/\n(?=\s*\d+[\).]\s*NAME:)/);
+    const items = [];
+    chunks.forEach(chunk=>{
+      const nameM = chunk.match(/NAME:\s*(.*)/);
+      if(!nameM) return;
+      const countM = chunk.match(/COUNT:\s*(\d+)/);
+      const causeM = chunk.match(/CAUSE:\s*([\s\S]*?)(?=\n\s*RULE:|\n\s*ADVICE:|$)/);
+      const ruleM = chunk.match(/RULE:\s*([\s\S]*?)(?=\n\s*ADVICE:|$)/);
+      const adviceM = chunk.match(/ADVICE:\s*([\s\S]*?)$/);
+      const exampleMatches = [...chunk.matchAll(/EXAMPLE:\s*(.*?)\s*->\s*(.*)/g)];
+      items.push({
+        name: nameM[1].trim(),
+        count: countM ? parseInt(countM[1],10) : exampleMatches.length,
+        examples: exampleMatches.map(m=>({original: m[1].trim(), suggestion: m[2].trim()})),
+        cause: causeM ? causeM[1].trim() : '',
+        rule: ruleM ? ruleM[1].trim() : '',
+        advice: adviceM ? adviceM[1].trim() : ''
+      });
+    });
+    return items;
   }
 
   let currentlySpeakingBtn = null;
+  let isSpeaking = false; // true while the AI's reply is being read aloud - lets us keep the mic muted so it can't transcribe the AI's own voice
   function speakQueue(texts, onAllDone){
     if(!('speechSynthesis' in window) || !texts.length){ onAllDone && onAllDone(); return; }
     window.speechSynthesis.cancel();
+    isSpeaking = true;
     let i = 0;
     let done = false;
     function finish(){
       if(done) return;
       done = true;
+      isSpeaking = false;
       onAllDone && onAllDone();
     }
     function next(){
@@ -1797,73 +2054,94 @@
   let lastConfidence = null;
   let recBusy = false; // guards against overlapping start() calls, which throw InvalidStateError on some browsers
   let silenceTimer = null;
+  let userEditedTranscript = false; // true once the person manually edits the box mid-listening, so we stop overwriting their edit
   const SILENCE_MS = 10000; // how long to wait after the user stops talking before we finalize the utterance
+
+  // Recognition results are handled through this shared handler regardless of which underlying
+  // SpeechRecognition instance fires them. We recreate the instance on every start (see
+  // freshRecognizer below) and immediately detach the old instance's handlers, so a stray/late
+  // event from an already-stopped recognizer can never leak into the *next* utterance's text -
+  // this is what caused old, already-sent text to reappear in the box sometimes.
+  function handleRecResult(e){
+    if(isSpeaking) return; // never transcribe the AI's own voice while it's talking
+    if(userEditedTranscript) return; // the person is manually correcting the box - don't stomp on it
+    let finalChunk = '', interimChunk = '';
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      const r = e.results[i];
+      if(r.isFinal){ finalChunk += r[0].transcript; if(typeof r[0].confidence==='number' && r[0].confidence>0) lastConfidence = r[0].confidence; }
+      else { interimChunk += r[0].transcript; }
+    }
+    if(finalChunk.trim()) accumulatedTranscript = (accumulatedTranscript + ' ' + finalChunk).trim();
+    userInput.value = (accumulatedTranscript + ' ' + interimChunk).trim();
+    autoResize();
+    lastInputWasVoice = true;
+    // any new speech (even interim) means the person is still talking - push the silence deadline out
+    clearTimeout(silenceTimer);
+    clearTimeout(listeningWatchdog);
+    listeningWatchdog = setTimeout(watchdogFire, 20000);
+    if(voiceSessionActive){
+      silenceTimer = setTimeout(()=>{ if(listening) finalizeListening(); }, SILENCE_MS);
+    }
+  }
+  function handleRecEnd(){
+    clearTimeout(listeningWatchdog);
+    clearTimeout(silenceTimer);
+    listening=false;
+    recBusy = false;
+    micBtn.classList.remove('active','listening-pulse');
+    if(!manualStop && voiceSessionActive){
+      // the browser cut the session off on its own (varies a lot by device) - resume seamlessly
+      // after a short delay, since starting again immediately is what tends to throw on iOS
+      setTimeout(()=>{ if(voiceSessionActive && !manualStop) safeStart(); }, 250);
+      return;
+    }
+    voiceSessionActive = false;
+    userInput.dataset.clarity = lastConfidence!=null ? lastConfidence : '';
+    if(userInput.value.trim() && autoSendOn){ sendMessage(lastConfidence); }
+  }
+  function handleRecError(e){
+    clearTimeout(listeningWatchdog);
+    clearTimeout(silenceTimer);
+    listening=false; recBusy = false; micBtn.classList.remove('active','listening-pulse');
+    const errType = e && e.error;
+    // "aborted" fires routinely when we intentionally stop/restart the recognizer - not a real problem,
+    // and "no-speech" during voice mode just means a longer natural pause - neither should alarm the user.
+    if(errType === 'aborted'){ return; }
+    if(errType === 'no-speech'){
+      if(voiceSessionActive && !manualStop){ setTimeout(()=>{ if(voiceSessionActive && !manualStop) safeStart(); }, 250); }
+      return;
+    }
+    let msg = '麦克风识别出了点问题，再试一次？';
+    if(errType === 'not-allowed') msg = '麦克风权限被拒绝了 —— 请检查浏览器/系统的麦克风权限设置并允许访问。';
+    else if(errType === 'network') msg = '语音识别网络异常，请重试。';
+    manualStop = true; voiceSessionActive = false;
+    showMicBanner(msg);
+  }
+  // Builds a brand-new recognizer instance with fresh handlers, and fully detaches the previous
+  // instance's handlers first (so any event still in flight from it becomes a no-op).
+  function freshRecognizer(){
+    if(rec){ rec.onresult = null; rec.onend = null; rec.onerror = null; try{ rec.abort(); }catch(e){} }
+    const r = new SR();
+    r.lang = 'en-US';
+    r.interimResults = true;
+    r.continuous = true; // lets a natural short pause not immediately end recognition;
+    // we decide when the person is actually "done" ourselves via the silence timer below,
+    // instead of relying on each browser's own (very inconsistent) built-in cutoff.
+    r.onresult = handleRecResult;
+    r.onend = handleRecEnd;
+    r.onerror = handleRecError;
+    return r;
+  }
   try{
     if(SR){
       micBtn.style.display='flex';
-      rec = new SR(); rec.lang='en-US'; rec.interimResults=true;
-      rec.continuous = true; // lets a natural short pause not immediately end recognition;
-      // we decide when the person is actually "done" ourselves via the silence timer below,
-      // instead of relying on each browser's own (very inconsistent) built-in cutoff.
+      rec = freshRecognizer();
       micBtn.addEventListener('click', ()=>{
         try{
           if(listening){ finalizeListening(); return; }
           startListening();
         }catch(e){ console.error('ChatCoach mic click error:', e); showMicBanner('麦克风出了点问题，再试一次？'); }
       });
-      rec.onresult = (e)=>{
-        let finalChunk = '', interimChunk = '';
-        for(let i=e.resultIndex; i<e.results.length; i++){
-          const r = e.results[i];
-          if(r.isFinal){ finalChunk += r[0].transcript; if(typeof r[0].confidence==='number' && r[0].confidence>0) lastConfidence = r[0].confidence; }
-          else { interimChunk += r[0].transcript; }
-        }
-        if(finalChunk.trim()) accumulatedTranscript = (accumulatedTranscript + ' ' + finalChunk).trim();
-        userInput.value = (accumulatedTranscript + ' ' + interimChunk).trim();
-        autoResize();
-        lastInputWasVoice = true;
-        // any new speech (even interim) means the person is still talking - push the silence deadline out
-        clearTimeout(silenceTimer);
-        clearTimeout(listeningWatchdog);
-        listeningWatchdog = setTimeout(watchdogFire, 20000);
-        if(voiceSessionActive){
-          silenceTimer = setTimeout(()=>{ if(listening) finalizeListening(); }, SILENCE_MS);
-        }
-      };
-      rec.onend = ()=>{
-        clearTimeout(listeningWatchdog);
-        clearTimeout(silenceTimer);
-        listening=false;
-        recBusy = false;
-        micBtn.classList.remove('active','listening-pulse');
-        if(!manualStop && voiceSessionActive){
-          // the browser cut the session off on its own (varies a lot by device) - resume seamlessly
-          // after a short delay, since starting again immediately is what tends to throw on iOS
-          setTimeout(()=>{ if(voiceSessionActive && !manualStop) safeStart(); }, 250);
-          return;
-        }
-        voiceSessionActive = false;
-        userInput.dataset.clarity = lastConfidence!=null ? lastConfidence : '';
-        if(userInput.value.trim() && autoSendOn){ sendMessage(lastConfidence); }
-      };
-      rec.onerror = (e)=>{
-        clearTimeout(listeningWatchdog);
-        clearTimeout(silenceTimer);
-        listening=false; recBusy = false; micBtn.classList.remove('active','listening-pulse');
-        const errType = e && e.error;
-        // "aborted" fires routinely when we intentionally stop/restart the recognizer - not a real problem,
-        // and "no-speech" during voice mode just means a longer natural pause - neither should alarm the user.
-        if(errType === 'aborted'){ return; }
-        if(errType === 'no-speech'){
-          if(voiceSessionActive && !manualStop){ setTimeout(()=>{ if(voiceSessionActive && !manualStop) safeStart(); }, 250); }
-          return;
-        }
-        let msg = '麦克风识别出了点问题，再试一次？';
-        if(errType === 'not-allowed') msg = '麦克风权限被拒绝了 —— 请检查浏览器/系统的麦克风权限设置并允许访问。';
-        else if(errType === 'network') msg = '语音识别网络异常，请重试。';
-        manualStop = true; voiceSessionActive = false;
-        showMicBanner(msg);
-      };
     } else {
       voiceToggle.disabled = true;
       voiceToggle.title = '当前浏览器不支持语音识别，语音对话模式不可用（可尝试 Chrome，部分旧版本 iOS Safari 也不支持）';
@@ -1894,14 +2172,18 @@
   // start() guarded against the InvalidStateError some browsers throw if called while already busy
   function safeStart(){
     if(!rec || recBusy) return;
+    if(isSpeaking){ setTimeout(safeStart, 300); return; } // don't reopen the mic while the AI is still talking
     recBusy = true;
+    rec = freshRecognizer();
     try{ rec.start(); listening=true; micBtn.classList.add('active','listening-pulse'); }
     catch(e){ recBusy = false; }
   }
   function startListening(){
     if(!rec || recBusy) return;
+    if(isSpeaking){ setTimeout(startListening, 300); return; } // don't open the mic while the AI is still talking - avoids transcribing its own voice
     manualStop = false;
     voiceSessionActive = true;
+    userEditedTranscript = false;
     // Seed from whatever's already sitting in the box. If the last utterance was already
     // sent, sendMessage() already cleared the box, so this starts clean. If the last utterance
     // was paused (silence timeout or manual mic tap) and never sent, this keeps it so the
@@ -1910,6 +2192,7 @@
     lastConfidence = null;
     autoResize();
     recBusy = true;
+    rec = freshRecognizer();
     try{ rec.start(); listening=true; micBtn.classList.add('active','listening-pulse'); }
     catch(e){ recBusy = false; showMicBanner('麦克风启动失败，请等一两秒再试一次。'); return; }
     clearTimeout(listeningWatchdog);
@@ -1993,15 +2276,35 @@
 Scenario: "${selectedScenario.en}". ${levelSystemDesc}
 Rules:
 - Stay in character for the scenario. Keep your in-character reply short: 1-3 natural sentences, like real spoken dialogue.
-- ${isOpening ? 'This is the opening line: start the scene naturally. There is no learner message yet, so "corrections" must be an empty array, "encouragement" and "native_version" must be "", and "praise" must be "".' : "After giving your in-character reply, separately evaluate ONLY the learner's most recent message (the very last one, ignore any earlier turns even if the learner asks you to go back and review previous messages) for EVERY grammar, word choice, or naturalness issue, regardless of the learner's level - always point out mistakes fully and honestly, never silently skip a message just because it looks short or simple, the level only changes your own vocabulary/pace, never how strictly or how often you check the learner. List up to 3 concise corrections if there are real issues, all of them about this one most recent message only - never lump together corrections from multiple different past messages into one response. If there are corrections, also write: (1) a short warm one-sentence 'encouragement' in Chinese to say before the corrections (never skip this, always find something genuine and specific to be positive about, e.g. effort, a correct part of the sentence, or good communication despite errors), and (2) a 'native_version' - one natural full sentence in English showing how a native speaker would most naturally express what the learner was trying to say in THIS most recent message (not just a list of fixes, a real fluent sentence, and only for this one message, not a combined rewrite of multiple messages). If the message was already good with no real issues, leave corrections/encouragement/native_version empty and instead write a short one-sentence praise in natural spoken English in the 'praise' field. If the learner explicitly asks you to go back and review earlier messages, gently explain in-character that you can only check their most recent message each turn, and that a full review of everything they've said is available anytime via the '结束并复盘' button."}
+- ${isOpening ? 'This is the opening line: start the scene naturally. There is no learner message yet, so leave the CORRECTIONS, ENCOURAGEMENT, NATIVE_VERSION, and PRAISE sections empty.' : "After giving your in-character reply, separately evaluate ONLY the learner's most recent message (the very last one, ignore any earlier turns even if the learner asks you to go back and review previous messages) for EVERY grammar, word choice, or naturalness issue, regardless of the learner's level - always point out mistakes fully and honestly, never silently skip a message just because it looks short or simple, the level only changes your own vocabulary/pace, never how strictly or how often you check the learner. List up to 3 concise corrections in the CORRECTIONS section if there are real issues, all of them about this one most recent message only - never lump together corrections from multiple different past messages into one response. If there are corrections, also write: (1) a short warm one-sentence ENCOURAGEMENT in Chinese to say before the corrections (never skip this, always find something genuine and specific to be positive about, e.g. effort, a correct part of the sentence, or good communication despite errors), and (2) a NATIVE_VERSION - one natural full sentence in English showing how a native speaker would most naturally express what the learner was trying to say in THIS most recent message (not just a list of fixes, a real fluent sentence, and only for this one message, not a combined rewrite of multiple messages). If the message was already good with no real issues, leave CORRECTIONS/ENCOURAGEMENT/NATIVE_VERSION empty and instead write a short one-sentence PRAISE in natural spoken English. If the learner explicitly asks you to go back and review earlier messages, gently explain in-character that you can only check their most recent message each turn, and that a full review of everything they've said is available anytime via the '结束并复盘' button."}
 - The learner may write a Chinese word or phrase in parentheses when they don't know how to say it in English, e.g. "I want to (预订) a table". Read the Chinese to understand their intent, then in your correction show the full natural English phrasing that replaces the parenthetical (e.g. original: "I want to (预订) a table" -> suggestion: "I want to book a table"), explaining the vocabulary in the note. Treat this as a normal, expected way learners will write to you, not an error in itself.
-- Never break character in the "reply" field itself - corrections go only in the "corrections" field.
-- The "note" field explaining each correction, and the "encouragement" field, must be written in Chinese.
-- The "praise" and "native_version" fields, if used, must be written in natural spoken English.
-- CRITICAL for valid JSON: inside any string value (reply, note, encouragement, native_version, praise), never use a double quote character ("). If you need to quote a word or phrase within a string, use single quotes (') instead. This is a hard rule - a double quote inside a string value breaks the JSON.
-- CRITICAL for valid JSON: never put a raw line break inside any string value. Write each field as a single line; if you'd naturally pause between sentences, just use ". " (period + space), not a newline.
-Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly this shape:
-{"reply": "string", "corrections": [{"original": "string", "suggestion": "string", "note": "short string in Chinese explaining why"}], "encouragement": "string or empty", "native_version": "string or empty", "praise": "string or empty"}`;
+- Never break character in the reply itself - corrections go only in the CORRECTIONS section.
+- The note explaining each correction, and the encouragement, must be written in Chinese.
+- The praise and native_version, if used, must be written in natural spoken English.
+
+Respond in EXACTLY this plain-text format, using these literal markers on their own lines. Do not use JSON or markdown code fences. Leave a section's content empty (just the two marker lines with nothing between) if it doesn't apply.
+
+<<<REPLY>>>
+(your 1-3 sentence in-character reply)
+<<<END>>>
+<<<ENCOURAGEMENT>>>
+(one warm Chinese sentence, or leave empty)
+<<<END>>>
+<<<NATIVE_VERSION>>>
+(one natural full English sentence, or leave empty)
+<<<END>>>
+<<<PRAISE>>>
+(one short English sentence, or leave empty)
+<<<END>>>
+<<<CORRECTIONS>>>
+(zero to 3 items, each formatted exactly like this, numbered; leave this whole section empty if there are no corrections)
+1) ORIGINAL: the learner's original wording
+SUGGESTION: the corrected wording
+NOTE: short Chinese explanation of why
+2) ORIGINAL: ...
+SUGGESTION: ...
+NOTE: ...
+<<<END>>>`;
 
     const apiMessages = history.slice();
     apiMessages.push({role:'user', content: isOpening ? '(begin the scene)' : userText});
@@ -2012,41 +2315,35 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly t
     }
     try{
       let parsed = null;
-      let lastCleanText = '';
-      let tokenBudget = 2200;
-      for(let attempt=0; attempt<3 && !parsed; attempt++){
-        const data = await callClaudeAPI({ model: apiConfig.model, max_tokens: tokenBudget, system: systemPrompt, messages: apiMessages });
-        const textOut = (data.content||[]).map(b=>b.text||'').join('');
-        // strip ```json fences, then strip raw control characters - the model occasionally emits a literal
-        // line break inside a string value (e.g. a multi-sentence "note"), which is invalid JSON and would
-        // otherwise fail to parse every single time that happens.
-        let clean = textOut.replace(/```json|```/g,'').trim();
-        clean = clean.replace(/[\r\n\t]+/g, ' ');
-        lastCleanText = clean;
-        try{ parsed = JSON.parse(extractJson(clean)); }
-        catch(e){
-          parsed = null;
-          // if the model's response got cut off before it could close the JSON object, it likely ran out
-          // of its token budget - give the retry more room instead of repeating the same failure
-          if(data.stop_reason === 'max_tokens') tokenBudget += 1200;
+      let rawTextOut = '';
+      for(let attempt=0; attempt<2 && !parsed; attempt++){
+        const data = await callClaudeAPI({ model: apiConfig.model, max_tokens: 1500, system: systemPrompt, messages: apiMessages });
+        rawTextOut = (data.content||[]).map(b=>b.text||'').join('').trim();
+        const reply = extractTag(rawTextOut, 'REPLY');
+        if(reply){
+          parsed = {
+            reply,
+            encouragement: extractTag(rawTextOut, 'ENCOURAGEMENT'),
+            native_version: extractTag(rawTextOut, 'NATIVE_VERSION'),
+            praise: extractTag(rawTextOut, 'PRAISE'),
+            corrections: parseCorrections(extractTag(rawTextOut, 'CORRECTIONS'))
+          };
         }
       }
       if(!parsed){
-        // try to salvage at least a usable "reply" out of the broken text before giving up entirely -
-        // but never invent a fake in-character line and silently push it into the conversation, since
-        // that garbage becoming part of the history is what used to cascade into every following turn
-        // failing too.
-        const fallbackReply = extractField(lastCleanText, 'reply');
-        if(fallbackReply){
-          parsed = { reply: fallbackReply, corrections: [], encouragement:"", native_version:"", praise:"" };
+        // the model didn't follow the tag format at all (rare) - if it still wrote something,
+        // that's better than a hard failure, so just use the raw text as the reply rather than
+        // erroring out on a conversational turn.
+        const cleaned = rawTextOut.replace(/<<<[A-Z_]+>>>/g, '').trim();
+        if(cleaned){
+          parsed = { reply: cleaned, corrections: [], encouragement:'', native_version:'', praise:'' };
         } else {
-          throw new Error('AI 返回的内容解析失败（格式异常），可能是网络不稳定，请点重试。');
+          throw new Error('AI 没有返回内容，可能是网络不稳定，请点重试。');
         }
       }
 
       removeTyping();
       if(!isOpening) addCorrectionCard(parsed.corrections, parsed.praise, parsed.encouragement, parsed.native_version);
-      if(!isOpening && parsed.native_version) addToChunks(parsed.native_version, selectedScenario.cn);
       addAiBubble(parsed.reply);
       if(!isOpening) turnCount++;
 
@@ -2115,35 +2412,77 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, in exactly t
     }
 
     const transcript = history.map(h => `${h.role === 'user' ? 'Learner' : 'AI'}: ${h.content}`).join('\n');
-    const correctionsJson = JSON.stringify(sessionCorrections);
+    const correctionsText = sessionCorrections.map((c,i)=>`${i+1}. "${c.original}" -> "${c.suggestion}" (note: ${c.note||''})`).join('\n');
 
-    const reviewSystemPrompt = `You are an English speaking coach reviewing a practice session transcript.
+    const reviewSystemPrompt = `You are an English speaking coach reviewing a practice session transcript, and your goal is to help the learner actually understand and fix the underlying knowledge gaps, not just see a list of fixes.
 Scenario: "${selectedScenario.en}". Learner's current level setting: ${selectedLevel}.
 Here is the full transcript:
 ${transcript}
 
-Here are all the corrections that were flagged during the session (JSON): ${correctionsJson}
+Here are all the corrections that were flagged during the session:
+${correctionsText || '(none)'}
 
 Task: analyze the learner's performance and produce a structured review.
-- Group the corrections into 2-5 meaningful categories (e.g. verb tense, prepositions, word choice, word order, articles, etc - pick categories that actually fit what happened, in Chinese names).
-- For each category: category name (Chinese), issue count, up to 3 example pairs (original -> suggestion), a short root-cause explanation in Chinese, and a short actionable piece of advice in Chinese.
+- Group the corrections into 2-5 meaningful categories (e.g. 冠词, 时态, 介词, 词序, 词汇选择 etc - pick categories that actually fit what happened, in Chinese names).
+- For each category, besides the example pairs, write a genuine mini knowledge-point lesson: explain the underlying grammar/usage RULE in Chinese (not just "why this one sentence was wrong" but the general rule so the learner can apply it next time - e.g. for articles, explain when to use a/an/the/nothing; for tense errors, explain when that tense is used and the structure; for word order, explain the correct pattern). Include 1-2 short additional correct-usage example sentences (in English, with Chinese translation) that are NOT from the transcript, to reinforce the rule.
 - Identify 1-2 genuine strengths from the transcript (in Chinese).
 - Write one short overall encouraging paragraph in Chinese (2-3 sentences).
 - Suggest one specific next scenario or focus area to practice next (in Chinese, one sentence).
-- Based on how well the learner handled this level, suggest whether their next session level should be "beginner", "intermediate", or "advanced", plus a one-sentence Chinese reason.
-If there were no corrections at all, categories should be an empty array and strengths/overall should praise the clean performance, and the level suggestion should likely move up.
-CRITICAL for valid JSON: inside any string value, never use a double quote character ("). If you need to quote a word or phrase within a string, use single quotes (') instead. This is a hard rule.
-Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this shape:
-{"categories": [{"name":"string","count":number,"examples":[{"original":"string","suggestion":"string"}],"cause":"string","advice":"string"}], "strengths": "string", "overall": "string", "next_focus": "string", "suggested_level": "beginner|intermediate|advanced", "level_reason": "string"}`;
+- Based on how well the learner handled this level, suggest whether their next session level should be beginner, intermediate, or advanced, plus a one-sentence Chinese reason.
+If there were no corrections at all, leave the CATEGORIES section empty and have STRENGTHS/OVERALL praise the clean performance, and the level suggestion should likely move up.
+
+Respond in EXACTLY this plain-text format, literal markers on their own lines, no JSON, no markdown fences. Leave a section empty (just its two marker lines) if not applicable.
+
+<<<STRENGTHS>>>
+(1-2 sentences in Chinese)
+<<<END>>>
+<<<OVERALL>>>
+(2-3 encouraging sentences in Chinese)
+<<<END>>>
+<<<NEXT_FOCUS>>>
+(one Chinese sentence)
+<<<END>>>
+<<<SUGGESTED_LEVEL>>>
+(exactly one of: beginner / intermediate / advanced)
+<<<END>>>
+<<<LEVEL_REASON>>>
+(one Chinese sentence)
+<<<END>>>
+<<<CATEGORIES>>>
+(0-5 items, each formatted exactly like this, numbered)
+1) NAME: 分类中文名
+COUNT: 数量
+EXAMPLE: 原句 -> 修正后
+EXAMPLE: 原句2 -> 修正后2
+CAUSE: 这次犯错的具体原因（中文）
+RULE: 这个知识点的完整讲解 —— 规则是什么、什么时候用、正确的结构或用法是什么（中文，写得足够详细，能当作一条小知识点来学习，可以包含1-2个新的正确用法例句并附中文翻译）
+ADVICE: 下次可以怎么练习或注意什么（中文）
+2) NAME: ...
+COUNT: ...
+EXAMPLE: ...
+CAUSE: ...
+RULE: ...
+ADVICE: ...
+<<<END>>>`;
 
     try{
       const data = await callClaudeAPI({
-        model: apiConfig.model, max_tokens: 3000,
+        model: apiConfig.model, max_tokens: 3500,
         messages: [{role:'user', content: reviewSystemPrompt}]
       });
-      const textOut = (data.content||[]).map(b=>b.text||'').join('');
-      const clean = textOut.replace(/```json|```/g,'').trim();
-      const parsed = JSON.parse(extractJson(clean));
+      const textOut = (data.content||[]).map(b=>b.text||'').join('').trim();
+      const overall = extractTag(textOut, 'OVERALL');
+      const strengths = extractTag(textOut, 'STRENGTHS');
+      if(!overall && !strengths) throw new Error('AI 没有返回复盘内容，可能是网络不稳定，请点重试。');
+      const parsed = {
+        strengths,
+        overall,
+        next_focus: extractTag(textOut, 'NEXT_FOCUS'),
+        suggested_level: (extractTag(textOut, 'SUGGESTED_LEVEL') || '').trim().toLowerCase().replace(/[^a-z]/g,''),
+        level_reason: extractTag(textOut, 'LEVEL_REASON'),
+        categories: parseCategories(extractTag(textOut, 'CATEGORIES'))
+      };
+      if(!['beginner','intermediate','advanced'].includes(parsed.suggested_level)) parsed.suggested_level = selectedLevel;
       lastReviewData = parsed;
       addHistoryEntry({
         date: new Date().toLocaleString(),
@@ -2151,7 +2490,9 @@ Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this s
         level: selectedLevel,
         turnCount: turnCount,
         correctionsCount: sessionCorrections.length,
-        overall: parsed.overall || ''
+        overall: parsed.overall || '',
+        transcript: history.slice(),
+        reviewData: parsed
       });
       renderReview(parsed);
     }catch(err){
@@ -2186,7 +2527,7 @@ Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this s
     </div>`;
     out += `<div class="review-hero"><h3>👍 做得好的地方</h3><p>${escapeHtml(data.strengths||'')}</p></div>`;
 
-    (data.categories||[]).forEach(cat=>{
+    (data.categories||[]).forEach((cat,ci)=>{
       let examplesHtml = (cat.examples||[]).map(ex=>
         `<div><span class="orig">${escapeHtml(ex.original)}</span><span class="arrow">→</span><span>${escapeHtml(ex.suggestion)}</span></div>`
       ).join('');
@@ -2194,6 +2535,7 @@ Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this s
         <div class="cat-title"><span>${escapeHtml(cat.name)}</span><span class="count">${cat.count} 处</span></div>
         <div class="examples">${examplesHtml}</div>
         <div class="cause"><b>原因：</b>${escapeHtml(cat.cause||'')}</div>
+        ${cat.rule ? `<button class="rule-toggle" data-idx="${ci}">📚 展开知识点讲解 ›</button><div class="rule-body" id="ruleBody${ci}">${escapeHtml(cat.rule)}</div>` : ''}
         <div class="advice"><b>建议：</b>${escapeHtml(cat.advice||'')}</div>
       </div>`;
     });
@@ -2209,6 +2551,13 @@ Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this s
     out += `<button class="export-btn" id="exportReviewBtn">📥 导出本次复盘（Markdown）</button>`;
 
     reviewBody.innerHTML = out;
+    reviewBody.querySelectorAll('.rule-toggle').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const body = document.getElementById('ruleBody' + btn.dataset.idx);
+        const isOpen = body.classList.toggle('show');
+        btn.textContent = isOpen ? '📚 收起知识点讲解 ‹' : '📚 展开知识点讲解 ›';
+      });
+    });
 
     const pathActionBtn = document.getElementById('pathActionBtn');
     if(pathActionBtn){
@@ -2234,7 +2583,9 @@ Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this s
     (data.categories||[]).forEach(cat=>{
       md += `## ${cat.name}（${cat.count} 处）\n`;
       (cat.examples||[]).forEach(ex=>{ md += `- ${ex.original} → ${ex.suggestion}\n`; });
-      md += `原因：${cat.cause||''}\n建议：${cat.advice||''}\n\n`;
+      md += `原因：${cat.cause||''}\n`;
+      if(cat.rule) md += `\n📚 知识点讲解：\n${cat.rule}\n`;
+      md += `建议：${cat.advice||''}\n\n`;
     });
     md += `## 总结\n${data.overall||''}\n\n`;
     if(data.suggested_level) md += `建议下次难度：${levelLabel[data.suggested_level]||data.suggested_level} — ${data.level_reason||''}\n\n`;
