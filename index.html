@@ -521,6 +521,10 @@
     font-size:12px;color:var(--correct);background:var(--correct-dim);
     padding:8px 12px;border-radius:10px;margin-bottom:10px;display:none;
   }
+  .test-result-error{
+    font-size:12px;color:#C0392B;background:rgba(192,57,43,0.1);
+    padding:8px 12px;border-radius:10px;margin-top:8px;line-height:1.5;
+  }
 </style>
 </head>
 <body>
@@ -684,7 +688,9 @@
           <label class="settings-label" for="apiKeyInput">API Key</label>
           <input type="password" id="apiKeyInput" class="settings-input" placeholder="sk-ant-...">
           <button class="settings-btn" id="saveApiBtn">保存 API 设置</button>
-          <p class="settings-note">信息只保存在你这台电脑的浏览器本地，不会上传。官方 Anthropic 接口国内直连通常需要科学上网；国内可直连的选项可以填智谱等 Claude 兼容中转地址，如 https://open.bigmodel.cn/api/anthropic。</p>
+          <button class="settings-btn" id="testConnectionBtn">🔌 测试连接</button>
+          <div id="testConnectionResult"></div>
+          <p class="settings-note">信息只保存在你这台电脑的浏览器本地，不会上传。官方 Anthropic 接口国内直连通常需要科学上网；国内可直连的选项可以填智谱等 Claude 兼容中转地址，如 https://open.bigmodel.cn/api/anthropic。<br><br>⚠️ 如果测试连接报"无法连接"或对话第一句就报错，很可能是你填的中转/代理服务没有为浏览器直接访问开启 CORS 跨域许可——大部分中转服务是给后端服务器调用设计的，默认不允许网页直接调用。这种情况需要联系服务商确认是否支持"浏览器端直连（CORS）"，或者换一个明确支持浏览器直连的服务。</p>
         </div>
       </div>
       <div class="settings-section">
@@ -898,6 +904,55 @@
     }, 1600);
   });
   if(!apiConfig.apiKey){ setTimeout(openSettings, 300); }
+
+  const testConnectionBtn = document.getElementById('testConnectionBtn');
+  const testConnectionResult = document.getElementById('testConnectionResult');
+  testConnectionBtn.addEventListener('click', async ()=>{
+    // test against whatever is currently typed in the form, not necessarily what was last saved,
+    // so the person can try different settings without needing to save each time first
+    const testConfig = {
+      baseUrl: (baseUrlInput.value.trim() || 'https://api.anthropic.com').replace(/\/$/,''),
+      model: modelInput.value.trim() || 'claude-sonnet-5',
+      apiKey: apiKeyInput.value.trim()
+    };
+    if(!testConfig.apiKey){
+      testConnectionResult.innerHTML = '<div class="settings-empty">先填一下 API Key 再测试。</div>';
+      return;
+    }
+    testConnectionBtn.disabled = true;
+    testConnectionBtn.textContent = '测试中…';
+    testConnectionResult.innerHTML = '<div class="settings-empty">正在连接…</div>';
+    const startedAt = Date.now();
+    try{
+      const response = await fetch(testConfig.baseUrl + '/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': testConfig.apiKey,
+          'Authorization': 'Bearer ' + testConfig.apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({ model: testConfig.model, max_tokens: 10, messages: [{role:'user', content:'hi'}] })
+      });
+      const ms = Date.now() - startedAt;
+      const raw = await response.text();
+      let data = null;
+      try{ data = JSON.parse(raw); }catch(e){ /* leave data null, handled below */ }
+      if(data && data.error){
+        testConnectionResult.innerHTML = `<div class="test-result-error">连上了服务器，但返回了错误（HTTP ${response.status}，用时 ${ms}ms）：${escapeHtml(data.error.message||JSON.stringify(data.error))}<br>这通常是 API Key 或模型名称填错了，不是网络问题。</div>`;
+      } else if(response.ok && data){
+        testConnectionResult.innerHTML = `<div class="settings-note" style="color:var(--correct);">✓ 连接成功！（用时 ${ms}ms）配置没问题，可以开始对话了。</div>`;
+      } else {
+        testConnectionResult.innerHTML = `<div class="test-result-error">收到了响应，但格式不对（HTTP ${response.status}，用时 ${ms}ms）。前 150 字符：${escapeHtml(raw.slice(0,150))}</div>`;
+      }
+    }catch(networkErr){
+      testConnectionResult.innerHTML = `<div class="test-result-error">❌ 无法连接（浏览器报错：${escapeHtml(networkErr && networkErr.message || '未知错误')}）。<br>最常见原因：① Base URL 填错了；② 这个服务不支持浏览器直接访问（CORS），需要联系服务商确认；③ 网络断了或被拦截了。</div>`;
+    } finally {
+      testConnectionBtn.disabled = false;
+      testConnectionBtn.textContent = '🔌 测试连接';
+    }
+  });
 
   themeSwatches.querySelectorAll('.theme-swatch').forEach(sw=>{
     if(sw.dataset.t === (savedTheme || 'apple')) sw.classList.add('active'); else sw.classList.remove('active');
@@ -2237,11 +2292,19 @@ apply for a job -> 申请工作
     let lastErr;
     for(let i=0; i<attempts; i++){
       try{
-        const response = await fetch(apiUrl(), {
-          method: "POST",
-          headers: apiHeaders(),
-          body: JSON.stringify(body)
-        });
+        let response;
+        try{
+          response = await fetch(apiUrl(), {
+            method: "POST",
+            headers: apiHeaders(),
+            body: JSON.stringify(body)
+          });
+        }catch(networkErr){
+          // fetch() itself rejected before any HTTP response came back - this is always a network/CORS/URL
+          // problem, never something the AI or the JSON parsing can be blamed for. Give a diagnosis instead
+          // of the browser's cryptic one-liner ("Load failed" on Safari, "Failed to fetch" on Chrome, etc).
+          throw new Error(`无法连接到 API 地址（当前设置：${apiConfig.baseUrl || '(空)'}）。最常见的原因：① Base URL 填错了或者服务暂时不可用；② 你用的是第三方中转/代理服务，而它没有为浏览器直接访问开启 CORS 跨域许可（大多数中转服务是给后端服务器调用设计的，不允许网页直接调用，这种情况需要让服务商开启 CORS，或者换成支持浏览器直连的服务）；③ 网络本身断了，或者被防火墙/广告拦截插件挡住了。可以在设置里点"测试连接"确认具体是哪种情况。（浏览器原始报错：${networkErr && networkErr.message}）`);
+        }
         const raw = await response.text();
         let data;
         try{ data = JSON.parse(raw); }
