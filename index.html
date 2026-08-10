@@ -690,7 +690,7 @@
           <button class="settings-btn" id="saveApiBtn">保存 API 设置</button>
           <button class="settings-btn" id="testConnectionBtn">🔌 测试连接</button>
           <div id="testConnectionResult"></div>
-          <p class="settings-note">信息只保存在你这台电脑的浏览器本地，不会上传。官方 Anthropic 接口国内直连通常需要科学上网；国内可直连的选项可以填智谱等 Claude 兼容中转地址，如 https://open.bigmodel.cn/api/anthropic。<br><br>⚠️ 如果测试连接报"无法连接"或对话第一句就报错，很可能是你填的中转/代理服务没有为浏览器直接访问开启 CORS 跨域许可——大部分中转服务是给后端服务器调用设计的，默认不允许网页直接调用。这种情况需要联系服务商确认是否支持"浏览器端直连（CORS）"，或者换一个明确支持浏览器直连的服务。</p>
+          <p class="settings-note">信息只保存在你这台电脑的浏览器本地，不会上传。官方 Anthropic 接口国内直连通常需要科学上网；国内可直连的选项可以填智谱等 Claude 兼容中转地址，如 https://open.bigmodel.cn/api/anthropic。<br><br>⚠️ 如果测试连接报"无法连接"或对话第一句就报错，很可能是你填的中转/代理服务没有为浏览器直接访问开启 CORS 跨域许可——像智谱这类中转接口通常是给 Claude Code、后端 SDK 这类场景设计的，不支持网页直接调用。解决办法：部署一个免费的 Cloudflare Worker 做转发代理（几分钟就能搞定，代码已经写好了，问 Claude 要"chatcoach-cors-proxy.js"这个文件和部署步骤），部署好后把这里的 Base URL 换成你的 Worker 网址（例如 https://你的worker名.你的用户名.workers.dev/api/anthropic），API Key 和模型名不变。</p>
         </div>
       </div>
       <div class="settings-section">
@@ -1760,7 +1760,7 @@
           const data = await callClaudeAPI({
             model: apiConfig.model, max_tokens: 350,
             messages: [{role:'user', content: `Define the English word or phrase "${word}" as it's used in this sentence: "${sentence}".
-Respond in EXACTLY this plain-text format, literal markers on their own lines, no JSON, no markdown fences. Leave a section empty (just the two marker lines) if not applicable.
+Respond in EXACTLY this plain-text format, literal markers on their own lines, no JSON, no markdown fences. Leave a section empty (just the two marker lines) if not applicable. The markers MUST include the literal angle-bracket characters exactly as shown (<<<TAG>>> and <<<END>>>) - never drop the << >> characters, never write just the bare word without them.
 <<<EN>>>
 (one simple English definition, max 15 words)
 <<<END>>>
@@ -1785,19 +1785,20 @@ apply for a job -> 申请工作
 <<<END>>>` }]
           }, 2);
           const raw = (data.content||[]).map(b=>b.text||'').join('').trim();
-          const en = extractTag(raw, 'EN');
+          const WORD_TAGS = ['EN','ZH','IPA','CATEGORY','COLLOCATIONS','EXAMPLE','EXAMPLE_ZH'];
+          const en = extractTag(raw, 'EN', WORD_TAGS);
           if(en){
-            const collocLines = extractTag(raw, 'COLLOCATIONS').split('\n').map(l=>l.trim()).filter(Boolean);
+            const collocLines = extractTag(raw, 'COLLOCATIONS', WORD_TAGS).split('\n').map(l=>l.trim()).filter(Boolean);
             const collocations = [], collocations_zh = [];
             collocLines.forEach(line=>{
               const parts = line.split('->');
               if(parts.length>=2){ collocations.push(parts[0].trim()); collocations_zh.push(parts.slice(1).join('->').trim()); }
             });
             def = {
-              en, zh: extractTag(raw, 'ZH'), ipa: extractTag(raw, 'IPA'),
-              category: extractTag(raw, 'CATEGORY') || '其他',
+              en, zh: extractTag(raw, 'ZH', WORD_TAGS), ipa: extractTag(raw, 'IPA', WORD_TAGS),
+              category: extractTag(raw, 'CATEGORY', WORD_TAGS) || '其他',
               collocations, collocations_zh,
-              example: extractTag(raw, 'EXAMPLE'), example_zh: extractTag(raw, 'EXAMPLE_ZH')
+              example: extractTag(raw, 'EXAMPLE', WORD_TAGS), example_zh: extractTag(raw, 'EXAMPLE_ZH', WORD_TAGS)
             };
           }
         }catch(err){ /* retry */ }
@@ -1960,13 +1961,30 @@ apply for a job -> 申请工作
   // needs escaping here (quotes, apostrophes, line breaks are all fine as-is), which is what made the
   // old JSON.parse-based approach fail unpredictably as replies got longer or more natural. A missing
   // or malformed tag degrades gracefully (empty string) instead of throwing and killing the whole turn.
-  function extractTag(text, tag){
+  function extractTag(text, tag, allTags){
     const startTag = `<<<${tag}>>>`;
     const i = text.indexOf(startTag);
-    if(i === -1) return '';
-    const from = i + startTag.length;
-    const j = text.indexOf('<<<END>>>', from);
-    return (j === -1 ? text.slice(from) : text.slice(from, j)).trim();
+    if(i !== -1){
+      const from = i + startTag.length;
+      const j = text.indexOf('<<<END>>>', from);
+      return (j === -1 ? text.slice(from) : text.slice(from, j)).trim();
+    }
+    // Fallback for models that don't reliably keep the <<< >>> wrapper (seen with some non-Claude
+    // models like GLM) but still write the bare label word on its own before that section's content.
+    // Bound the section by the next known label from allTags, so we don't swallow later sections.
+    const startM = new RegExp(`(?:^|\\n)[ \\t]*${tag}\\b[ \\t:]*`, 'i').exec(text);
+    if(!startM) return '';
+    const from = startM.index + startM[0].length;
+    let end = text.length;
+    (allTags||[]).forEach(other=>{
+      if(other === tag) return;
+      const otherM = new RegExp(`(?:^|\\n)[ \\t]*${other}\\b[ \\t:]*`, 'i').exec(text.slice(from));
+      if(otherM){
+        const pos = from + otherM.index;
+        if(pos < end) end = pos;
+      }
+    });
+    return text.slice(from, end).trim();
   }
   function parseCorrections(block){
     if(!block) return [];
@@ -2335,21 +2353,48 @@ apply for a job -> 申请工作
       advanced: 'The learner is advanced. Use natural, idiomatic English with richer vocabulary, varied sentence structure, and normal native pace.'
     }[selectedLevel];
 
-    const systemPrompt = `You are role-playing as a conversation partner helping someone practice spoken English.
+    // Split into two focused API calls instead of one combined call asking for 5 different sections
+    // at once. Some models (particularly non-Claude ones accessed through a compatible proxy) are
+    // unreliable at keeping every section of a long multi-part format labeled correctly, and when
+    // that happens the whole turn used to come out as one jumbled blob. Call 1 asks for ONLY the
+    // in-character reply as plain text - there's nothing to mis-format, the response text IS the
+    // reply. Call 2 (skipped for the opening line) separately asks for the correction analysis in
+    // a shorter, more focused tag format. If call 2 fails or comes back unparseable, the turn still
+    // succeeds with just the reply and no correction feedback for that message, instead of failing
+    // or scrambling the whole turn.
+    const replySystemPrompt = `You are role-playing as a conversation partner helping someone practice spoken English.
 Scenario: "${selectedScenario.en}". ${levelSystemDesc}
-Rules:
-- Stay in character for the scenario. Keep your in-character reply short: 1-3 natural sentences, like real spoken dialogue.
-- ${isOpening ? 'This is the opening line: start the scene naturally. There is no learner message yet, so leave the CORRECTIONS, ENCOURAGEMENT, NATIVE_VERSION, and PRAISE sections empty.' : "After giving your in-character reply, separately evaluate ONLY the learner's most recent message (the very last one, ignore any earlier turns even if the learner asks you to go back and review previous messages) for EVERY grammar, word choice, or naturalness issue, regardless of the learner's level - always point out mistakes fully and honestly, never silently skip a message just because it looks short or simple, the level only changes your own vocabulary/pace, never how strictly or how often you check the learner. List up to 3 concise corrections in the CORRECTIONS section if there are real issues, all of them about this one most recent message only - never lump together corrections from multiple different past messages into one response. If there are corrections, also write: (1) a short warm one-sentence ENCOURAGEMENT in Chinese to say before the corrections (never skip this, always find something genuine and specific to be positive about, e.g. effort, a correct part of the sentence, or good communication despite errors), and (2) a NATIVE_VERSION - one natural full sentence in English showing how a native speaker would most naturally express what the learner was trying to say in THIS most recent message (not just a list of fixes, a real fluent sentence, and only for this one message, not a combined rewrite of multiple messages). If the message was already good with no real issues, leave CORRECTIONS/ENCOURAGEMENT/NATIVE_VERSION empty and instead write a short one-sentence PRAISE in natural spoken English. If the learner explicitly asks you to go back and review earlier messages, gently explain in-character that you can only check their most recent message each turn, and that a full review of everything they've said is available anytime via the '结束并复盘' button."}
-- The learner may write a Chinese word or phrase in parentheses when they don't know how to say it in English, e.g. "I want to (预订) a table". Read the Chinese to understand their intent, then in your correction show the full natural English phrasing that replaces the parenthetical (e.g. original: "I want to (预订) a table" -> suggestion: "I want to book a table"), explaining the vocabulary in the note. Treat this as a normal, expected way learners will write to you, not an error in itself.
-- Never break character in the reply itself - corrections go only in the CORRECTIONS section.
-- The note explaining each correction, and the encouragement, must be written in Chinese.
-- The praise and native_version, if used, must be written in natural spoken English.
+${isOpening ? 'Start the scene naturally with an opening line.' : "Continue the roleplay naturally, replying to the learner's last message in character."}
+Keep your reply short: 1-3 natural sentences, like real spoken dialogue. Reply with ONLY your in-character line and nothing else - no labels, no meta-commentary, no quotation marks wrapped around it, no markdown.`;
 
-Respond in EXACTLY this plain-text format, using these literal markers on their own lines. Do not use JSON or markdown code fences. Leave a section's content empty (just the two marker lines with nothing between) if it doesn't apply.
+    const apiMessages = history.slice();
+    apiMessages.push({role:'user', content: isOpening ? '(begin the scene)' : userText});
 
-<<<REPLY>>>
-(your 1-3 sentence in-character reply)
-<<<END>>>
+    if(!apiConfig.apiKey){
+      removeTyping(); lastFailed = {userText, isOpening}; userInput.disabled = true; addErrorRow(); openSettings();
+      sendBtn.disabled = false; return;
+    }
+    try{
+      let replyText = '';
+      for(let attempt=0; attempt<2 && !replyText; attempt++){
+        const data = await callClaudeAPI({ model: apiConfig.model, max_tokens: 300, system: replySystemPrompt, messages: apiMessages });
+        replyText = (data.content||[]).map(b=>b.text||'').join('').trim();
+        // strip stray wrapping quotes some models like to add around the whole line
+        replyText = replyText.replace(/^["'“」]+|["'”」]+$/g, '').trim();
+      }
+      if(!replyText) throw new Error('AI 没有返回内容，可能是网络不稳定，请点重试。');
+
+      let corrections = [], encouragement = '', native_version = '', praise = '';
+      if(!isOpening){
+        const ANALYSIS_TAGS = ['ENCOURAGEMENT','NATIVE_VERSION','PRAISE','CORRECTIONS'];
+        const analysisPrompt = `You are an English speaking coach. The learner just wrote this message while practicing the scenario "${selectedScenario.en}": "${userText}"
+
+Evaluate ONLY this message for every grammar, word choice, or naturalness issue - always point out real mistakes fully and honestly, never skip them just because the message looks short or simple. The learner may write a Chinese word/phrase in parentheses when they don't know the English, e.g. "I want to (预订) a table" - read the Chinese to understand intent, then show the full natural English phrasing in your correction.
+
+List up to 3 concise corrections if there are real issues. If there are corrections, also write: (1) a short warm one-sentence encouragement in Chinese to say before the corrections, and (2) a native_version - one natural full English sentence showing how a native speaker would express what the learner meant. If the message was already good with no real issues, leave corrections/encouragement/native_version empty and write a short one-sentence praise in natural spoken English instead.
+
+Respond in EXACTLY this plain-text format, literal markers on their own lines, no JSON, no markdown fences. Leave a section empty (just its two marker lines) if not applicable. The markers MUST include the literal angle-bracket characters exactly as shown (<<<TAG>>> and <<<END>>>) - never drop the << >> characters, never write just the bare word without them.
+
 <<<ENCOURAGEMENT>>>
 (one warm Chinese sentence, or leave empty)
 <<<END>>>
@@ -2368,58 +2413,38 @@ NOTE: short Chinese explanation of why
 SUGGESTION: ...
 NOTE: ...
 <<<END>>>`;
-
-    const apiMessages = history.slice();
-    apiMessages.push({role:'user', content: isOpening ? '(begin the scene)' : userText});
-
-    if(!apiConfig.apiKey){
-      removeTyping(); lastFailed = {userText, isOpening}; userInput.disabled = true; addErrorRow(); openSettings();
-      sendBtn.disabled = false; return;
-    }
-    try{
-      let parsed = null;
-      let rawTextOut = '';
-      for(let attempt=0; attempt<2 && !parsed; attempt++){
-        const data = await callClaudeAPI({ model: apiConfig.model, max_tokens: 1500, system: systemPrompt, messages: apiMessages });
-        rawTextOut = (data.content||[]).map(b=>b.text||'').join('').trim();
-        const reply = extractTag(rawTextOut, 'REPLY');
-        if(reply){
-          parsed = {
-            reply,
-            encouragement: extractTag(rawTextOut, 'ENCOURAGEMENT'),
-            native_version: extractTag(rawTextOut, 'NATIVE_VERSION'),
-            praise: extractTag(rawTextOut, 'PRAISE'),
-            corrections: parseCorrections(extractTag(rawTextOut, 'CORRECTIONS'))
-          };
-        }
-      }
-      if(!parsed){
-        // the model didn't follow the tag format at all (rare) - if it still wrote something,
-        // that's better than a hard failure, so just use the raw text as the reply rather than
-        // erroring out on a conversational turn.
-        const cleaned = rawTextOut.replace(/<<<[A-Z_]+>>>/g, '').trim();
-        if(cleaned){
-          parsed = { reply: cleaned, corrections: [], encouragement:'', native_version:'', praise:'' };
-        } else {
-          throw new Error('AI 没有返回内容，可能是网络不稳定，请点重试。');
+        try{
+          for(let attempt=0; attempt<2; attempt++){
+            const data2 = await callClaudeAPI({ model: apiConfig.model, max_tokens: 900, messages: [{role:'user', content: analysisPrompt}] });
+            const raw2 = (data2.content||[]).map(b=>b.text||'').join('').trim();
+            encouragement = extractTag(raw2, 'ENCOURAGEMENT', ANALYSIS_TAGS);
+            native_version = extractTag(raw2, 'NATIVE_VERSION', ANALYSIS_TAGS);
+            praise = extractTag(raw2, 'PRAISE', ANALYSIS_TAGS);
+            corrections = parseCorrections(extractTag(raw2, 'CORRECTIONS', ANALYSIS_TAGS));
+            if(encouragement || native_version || praise || corrections.length) break;
+          }
+        }catch(analysisErr){
+          // the correction feedback is secondary to keeping the conversation itself flowing -
+          // if this call fails, just skip corrections for this turn rather than failing the whole turn
+          console.error('ChatCoach correction analysis failed (non-fatal, conversation continues):', analysisErr);
         }
       }
 
       removeTyping();
-      if(!isOpening) addCorrectionCard(parsed.corrections, parsed.praise, parsed.encouragement, parsed.native_version);
-      addAiBubble(parsed.reply);
+      if(!isOpening) addCorrectionCard(corrections, praise, encouragement, native_version);
+      addAiBubble(replyText);
       if(!isOpening) turnCount++;
 
       history.push({role:'user', content: isOpening ? '(begin the scene)' : userText});
-      history.push({role:'assistant', content: parsed.reply});
+      history.push({role:'assistant', content: replyText});
       lastFailed = null;
       userInput.disabled = false;
       userInput.placeholder = '用英语回复看看…';
       savePausedSnapshot(); // keep an autosaved checkpoint after every turn, in case the tab/app gets killed before an explicit exit
 
       const toSpeak = [];
-      if(parsed.reply) toSpeak.push(parsed.reply);
-      if(parsed.native_version) toSpeak.push(`Here's a more natural way to say it: ${parsed.native_version}`);
+      if(replyText) toSpeak.push(replyText);
+      if(native_version) toSpeak.push(`Here's a more natural way to say it: ${native_version}`);
       if(voiceModeOn || autoSpeakOn){
         speakQueue(toSpeak, ()=>{ if(voiceModeOn) setTimeout(()=>{ if(voiceModeOn) startListening(); }, 450); });
       }
@@ -2494,7 +2519,7 @@ Task: analyze the learner's performance and produce a structured review.
 - Based on how well the learner handled this level, suggest whether their next session level should be beginner, intermediate, or advanced, plus a one-sentence Chinese reason.
 If there were no corrections at all, leave the CATEGORIES section empty and have STRENGTHS/OVERALL praise the clean performance, and the level suggestion should likely move up.
 
-Respond in EXACTLY this plain-text format, literal markers on their own lines, no JSON, no markdown fences. Leave a section empty (just its two marker lines) if not applicable.
+Respond in EXACTLY this plain-text format, literal markers on their own lines, no JSON, no markdown fences. Leave a section empty (just its two marker lines) if not applicable. The markers MUST include the literal angle-bracket characters exactly as shown (<<<TAG>>> and <<<END>>>) - never drop the << >> characters, never write just the bare word without them.
 
 <<<STRENGTHS>>>
 (1-2 sentences in Chinese)
@@ -2534,16 +2559,17 @@ ADVICE: ...
         messages: [{role:'user', content: reviewSystemPrompt}]
       });
       const textOut = (data.content||[]).map(b=>b.text||'').join('').trim();
-      const overall = extractTag(textOut, 'OVERALL');
-      const strengths = extractTag(textOut, 'STRENGTHS');
+      const REVIEW_TAGS = ['STRENGTHS','OVERALL','NEXT_FOCUS','SUGGESTED_LEVEL','LEVEL_REASON','CATEGORIES'];
+      const overall = extractTag(textOut, 'OVERALL', REVIEW_TAGS);
+      const strengths = extractTag(textOut, 'STRENGTHS', REVIEW_TAGS);
       if(!overall && !strengths) throw new Error('AI 没有返回复盘内容，可能是网络不稳定，请点重试。');
       const parsed = {
         strengths,
         overall,
-        next_focus: extractTag(textOut, 'NEXT_FOCUS'),
-        suggested_level: (extractTag(textOut, 'SUGGESTED_LEVEL') || '').trim().toLowerCase().replace(/[^a-z]/g,''),
-        level_reason: extractTag(textOut, 'LEVEL_REASON'),
-        categories: parseCategories(extractTag(textOut, 'CATEGORIES'))
+        next_focus: extractTag(textOut, 'NEXT_FOCUS', REVIEW_TAGS),
+        suggested_level: (extractTag(textOut, 'SUGGESTED_LEVEL', REVIEW_TAGS) || '').trim().toLowerCase().replace(/[^a-z]/g,''),
+        level_reason: extractTag(textOut, 'LEVEL_REASON', REVIEW_TAGS),
+        categories: parseCategories(extractTag(textOut, 'CATEGORIES', REVIEW_TAGS))
       };
       if(!['beginner','intermediate','advanced'].includes(parsed.suggested_level)) parsed.suggested_level = selectedLevel;
       lastReviewData = parsed;
