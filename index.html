@@ -489,6 +489,8 @@
   .history-transcript .ht-row{margin-bottom:8px;}
   .history-transcript .ht-user b{color:var(--accent-strong);}
   .history-transcript .ht-ai b{color:var(--text-dim);}
+  .history-transcript .ht-original{color:var(--text-dim); text-decoration:line-through;}
+  .history-transcript .ht-corrected{color:var(--text); font-weight:600;}
 
   /* ---------- responsive / mobile ---------- */
   @media (max-width: 640px){
@@ -1239,9 +1241,21 @@
     if(h.transcript && h.transcript.length){
       out += `<div class="settings-section-title" style="margin-top:16px;">完整对话记录</div>`;
       out += '<div class="history-transcript">';
+      const turnMetaList = h.turnMeta || [];
+      let userTurnIdx = -1;
       h.transcript.forEach(t=>{
         if(t.content === '(begin the scene)') return;
-        out += `<div class="ht-row ${t.role==='user'?'ht-user':'ht-ai'}"><b>${t.role==='user'?'我':'AI'}：</b>${escapeHtml(t.content)}</div>`;
+        if(t.role === 'user'){
+          userTurnIdx++;
+          const meta = turnMetaList[userTurnIdx];
+          if(meta && meta.nativeVersion){
+            out += `<div class="ht-row ht-user"><b>我：</b><span class="ht-original">${escapeHtml(t.content)}</span><br><span class="ht-corrected">✓ ${escapeHtml(meta.nativeVersion)}</span></div>`;
+          } else {
+            out += `<div class="ht-row ht-user"><b>我：</b>${escapeHtml(t.content)}</div>`;
+          }
+        } else {
+          out += `<div class="ht-row ht-ai"><b>AI：</b>${escapeHtml(t.content)}</div>`;
+        }
       });
       out += '</div>';
     }
@@ -1348,6 +1362,9 @@
   const levelRate = {beginner:0.85, intermediate:0.95, advanced:1.05};
   let history = [];
   let sessionCorrections = [];
+  let turnMeta = []; // per-turn record of {userText, nativeVersion, corrections} - lets the history detail
+                      // view show the learner's original wording next to the corrected version, instead of
+                      // only ever showing the mistake with nothing to show what the fix actually was.
   let turnCount = 0;
   let voiceModeOn = false;
   let listening = false;
@@ -1477,7 +1494,7 @@
   startBtn.addEventListener('click', startChat);
   resetBtn.addEventListener('click', ()=>goToSetup());
   function goToSetup(suggestedLevel){
-    history = []; sessionCorrections = []; turnCount = 0; lastFailed=null; voiceModeOn=false; updateVoiceToggle();
+    history = []; sessionCorrections = []; turnMeta = []; turnCount = 0; lastFailed=null; voiceModeOn=false; updateVoiceToggle();
     msgsWrap.innerHTML = '';
     exitPath();
     clearPausedSnapshot();
@@ -1496,7 +1513,7 @@
     bannerScenario.textContent = selectedScenario.cn;
     bannerLevel.textContent = levelLabel[selectedLevel] + (activePath ? ` · ${activePath.title} 第${activeStageIndex+1}/${activePath.stages.length}关` : '');
     msgsWrap.innerHTML = '';
-    history = []; sessionCorrections = []; turnCount = 0;
+    history = []; sessionCorrections = []; turnMeta = []; turnCount = 0;
     clearPausedSnapshot();
     fetchTurn(null, true);
   }
@@ -1515,6 +1532,7 @@
       history: history,
       turnCount: turnCount,
       sessionCorrections: sessionCorrections,
+      turnMeta: turnMeta,
       activePathId: activePath ? activePath.id : null,
       activeStageIndex: activeStageIndex,
       chatHtml: msgsWrap.innerHTML,
@@ -1540,6 +1558,7 @@
     history = snap.history || [];
     turnCount = snap.turnCount || 0;
     sessionCorrections = snap.sessionCorrections || [];
+    turnMeta = snap.turnMeta || [];
     activePath = null; activeStageIndex = 0;
     if(snap.activePathId){
       const p = LEARNING_PATHS.find(x => x.id === snap.activePathId);
@@ -1597,6 +1616,7 @@
     userInput.dataset.clarity = '';
     addUserBubble(text, c);
     userInput.value='';
+    accumulatedTranscript = ''; // defensive: make sure nothing carries over into the next voice utterance
     autoResize();
     fetchTurn(text, false);
   }
@@ -1741,14 +1761,34 @@
       wordPopover.classList.remove('show');
     }
   });
+  // Clamps the popover so it always stays fully inside the viewport - previously if a word near
+  // the bottom of the screen was tapped, the popover (a position:fixed element) could render
+  // partly below the visible area, and since fixed elements don't scroll with the page, that
+  // extra content (collocations/example/etc, whatever pushed it past 70vh) became permanently
+  // unreachable on mobile. Re-measures and re-clamps after every content change, since the box's
+  // real height changes once the definition finishes loading.
+  function repositionPopover(anchorRect){
+    const margin = 10;
+    wordPopover.style.maxHeight = Math.round(window.innerHeight * 0.7) + 'px';
+    const width = wordPopover.offsetWidth || 280;
+    let left = Math.min(anchorRect.left, window.innerWidth - width - margin);
+    left = Math.max(margin, left);
+    let top = anchorRect.bottom + 6;
+    const height = wordPopover.offsetHeight;
+    if(top + height > window.innerHeight - margin){
+      const topIfAbove = anchorRect.top - height - 6;
+      top = topIfAbove >= margin ? topIfAbove : Math.max(margin, window.innerHeight - height - margin);
+    }
+    wordPopover.style.left = left + 'px';
+    wordPopover.style.top = top + 'px';
+  }
   async function openWordPopover(e, word, sentence){
     e.stopPropagation();
     const myToken = ++currentPopoverToken;
     const rect = e.target.getBoundingClientRect();
-    wordPopover.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
-    wordPopover.style.top = (rect.bottom + 6) + 'px';
     wordPopover.classList.add('show');
     wordPopover.innerHTML = `<button class="wp-close">✕</button><div class="wp-word">${escapeHtml(word)}</div><div class="wp-loading">查询中…</div>`;
+    repositionPopover(rect);
     wordPopover.querySelector('.wp-close').addEventListener('click', (ev)=>{ ev.stopPropagation(); wordPopover.classList.remove('show'); });
 
     const cacheKey = word.toLowerCase() + '|' + sentence;
@@ -1823,6 +1863,7 @@ apply for a job -> 申请工作
         <button class="wp-mark">🔖 加入生词本</button>
       </div>
     `;
+    repositionPopover(rect);
     wordPopover.querySelector('.wp-close').addEventListener('click', (ev)=>{ ev.stopPropagation(); wordPopover.classList.remove('show'); });
     wordPopover.querySelector('.wp-speak').addEventListener('click', (ev)=>{
       ev.stopPropagation();
@@ -1832,6 +1873,7 @@ apply for a job -> 申请工作
       ev.stopPropagation();
       const zh = wordPopover.querySelector('.wp-zh');
       zh.classList.toggle('show');
+      repositionPopover(rect);
     });
     wordPopover.querySelector('.wp-mark').addEventListener('click', (ev)=>{
       ev.stopPropagation();
@@ -2052,6 +2094,7 @@ apply for a job -> 申请工作
   }
 
   let selectedVoice = null;
+  const LS_VOICE = 'chatcoach_voice_pref';
   const RECOMMENDED_VOICE_NAMES = ['samantha','daniel','karen','moira','tessa','ava','alex','susan','fiona','serena',
     'stephanie','allison','nicky','catherine','martha','oliver','arthur','rishi','aaron','google us english',
     'google uk english female','google uk english male','microsoft zira','microsoft david','microsoft mark'];
@@ -2089,9 +2132,27 @@ apply for a job -> 申请工作
     addGroup('其他音色', normal, false);
     addGroup('更多音色（特殊音效，个性化选择）', novelty, false);
 
-    selectedVoice = (recommended[0] || normal[0] || novelty[0] || {v:list[0]}).v;
-    voiceSelect.value = (recommended[0] || normal[0] || novelty[0] || {idx:0}).idx;
-    voiceSelect.onchange = ()=>{ selectedVoice = list[voiceSelect.value]; };
+    // Preserve whatever the person already chose (this function can get re-invoked more than once
+    // by the browser's own voiceschanged event) instead of silently resetting back to the default
+    // every time. Prefer, in order: the in-memory selection, then a saved preference from a
+    // previous visit, then fall back to the usual recommended default.
+    let matchIdx = -1;
+    const wantName = (selectedVoice && selectedVoice.name) || loadJSON(LS_VOICE, null);
+    if(wantName){
+      matchIdx = list.findIndex(v => v.name === wantName);
+    }
+    if(matchIdx === -1){
+      const fallback = recommended[0] || normal[0] || novelty[0] || {v:list[0], idx:0};
+      selectedVoice = fallback.v;
+      voiceSelect.value = fallback.idx !== undefined ? fallback.idx : 0;
+    } else {
+      selectedVoice = list[matchIdx];
+      voiceSelect.value = matchIdx;
+    }
+    voiceSelect.onchange = ()=>{
+      selectedVoice = list[voiceSelect.value];
+      saveJSON(LS_VOICE, selectedVoice ? selectedVoice.name : null);
+    };
   }
   if('speechSynthesis' in window){
     populateVoices();
@@ -2192,17 +2253,24 @@ apply for a job -> 申请工作
   }
   // Builds a brand-new recognizer instance with fresh handlers, and fully detaches the previous
   // instance's handlers first (so any event still in flight from it becomes a no-op).
+  let recognizerGeneration = 0; // bumped every time a new recognizer instance is created
   function freshRecognizer(){
     if(rec){ rec.onresult = null; rec.onend = null; rec.onerror = null; try{ rec.abort(); }catch(e){} }
+    recognizerGeneration++;
+    const myGeneration = recognizerGeneration;
     const r = new SR();
     r.lang = 'en-US';
     r.interimResults = true;
     r.continuous = true; // lets a natural short pause not immediately end recognition;
     // we decide when the person is actually "done" ourselves via the silence timer below,
     // instead of relying on each browser's own (very inconsistent) built-in cutoff.
-    r.onresult = handleRecResult;
-    r.onend = handleRecEnd;
-    r.onerror = handleRecError;
+    // Belt-and-suspenders on top of nulling handlers above: some browsers still deliver an
+    // already-queued event even after handlers are nulled / abort() is called, especially on
+    // mobile. Comparing generation numbers here guarantees a stale/late event from a retired
+    // instance can never write into the box again, regardless of how that browser behaves.
+    r.onresult = (e)=>{ if(myGeneration === recognizerGeneration) handleRecResult(e); };
+    r.onend = ()=>{ if(myGeneration === recognizerGeneration) handleRecEnd(); };
+    r.onerror = (e)=>{ if(myGeneration === recognizerGeneration) handleRecError(e); };
     return r;
   }
   try{
@@ -2434,6 +2502,7 @@ NOTE: ...
       if(!isOpening) addCorrectionCard(corrections, praise, encouragement, native_version);
       addAiBubble(replyText);
       if(!isOpening) turnCount++;
+      if(!isOpening) turnMeta.push({userText, nativeVersion: native_version || '', corrections: corrections || []});
 
       history.push({role:'user', content: isOpening ? '(begin the scene)' : userText});
       history.push({role:'assistant', content: replyText});
@@ -2581,6 +2650,7 @@ ADVICE: ...
         correctionsCount: sessionCorrections.length,
         overall: parsed.overall || '',
         transcript: history.slice(),
+        turnMeta: turnMeta.slice(),
         reviewData: parsed
       });
       renderReview(parsed);
